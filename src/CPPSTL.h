@@ -1,17 +1,18 @@
 #pragma once
 
-#include <algorithm>      //提供了一系列算法，如排序、搜索、移除、变换等;
-#include <array>          //array 是一种固定长度的数组，随机存取元素高效。
-#include <bitset>         //bitset 是一种用于操作二进制位的容器，支持快速查询/修改二进制位。
-#include <cmath>          //提供了一系列数学函数，如三角函数、指数函数、对数函数等;
-#include <cstdint>        //提供了一系列定长整数类型，例如 uint8_t、uint16_t 等;
-#include <cstdio>         //提供了一种读写 C 风格的文件和流的方式;
-#include <ctime>          // 提供了一系列关于时间和日期的函数;
-#include <deque>          //deque 是一种双端队列，随机存取元素高效，在队列两端插入删除元素也高效。
-#include <forward_list>   //forward_list 是一种单向链表，随机存取元素效率低，在链表中插入删除元素高效
-#include <functional>     //用来传递匿名函数作为函数的参数
-#include <list>           //list 是一种双向链表，随机存取元素效率低，在链表中插入删除元素高效。
-#include <map>            //map 是一种关联数组，以关键字为索引，支持快速插入/删除/查询元素。
+#include <algorithm>     //提供了一系列算法，如排序、搜索、移除、变换等;
+#include <array>         //array 是一种固定长度的数组，随机存取元素高效。
+#include <bitset>        //bitset 是一种用于操作二进制位的容器，支持快速查询/修改二进制位。
+#include <cmath>         //提供了一系列数学函数，如三角函数、指数函数、对数函数等;
+#include <cstdint>       //提供了一系列定长整数类型，例如 uint8_t、uint16_t 等;
+#include <cstdio>        //提供了一种读写 C 风格的文件和流的方式;
+#include <ctime>         // 提供了一系列关于时间和日期的函数;
+#include <deque>         //deque 是一种双端队列，随机存取元素高效，在队列两端插入删除元素也高效。
+#include <forward_list>  //forward_list 是一种单向链表，随机存取元素效率低，在链表中插入删除元素高效
+#include <functional>    //用来传递匿名函数作为函数的参数
+#include <list>          //list 是一种双向链表，随机存取元素效率低，在链表中插入删除元素高效。
+#include <map>           //map 是一种关联数组，以关键字为索引，支持快速插入/删除/查询元素。
+#include <memory>
 #include <queue>          //queue 是一种先进先出（FIFO）的数据结构，只能在队列尾插入元素，在队列头删除元素。
 #include <set>            //set 是一种有序不重复集合，支持快速插入/删除/查询元素，并且元素具有唯一性。
 #include <sstream>        //提供了一种读写字符串流的方式;
@@ -39,4 +40,3 @@ unordered_multiset 无序多重集合：元素可以重复的无序集合，支�
 unordered_map 无序映射：键值对集合，支持快速插入/删除/查询键值对。
 unordered_multimap 无序多重映射：键可以重复的无序键值对集合，支持快速插入/删除/查询键值对。
 */
-
