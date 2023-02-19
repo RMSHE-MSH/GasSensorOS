@@ -1,28 +1,15 @@
 #pragma once
 #include <Arduino.h>
-#include <sdkconfig.h>
 
-#include <list>
-#include <map>
+#include <forward_queue.hpp>
+#include <make_unique.hpp>
 #include <memory>
 #include <regex>
+#include <stack>
+#include <tree.hpp>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
-
-/*
-用于创建一个智能指针对象:
-这段代码定义了一个模板函数 make_unique，用于创建并返回一个智能指针 unique_ptr，其中模板参数 T 代表指向的类型，参数 Args 代表构造函数参数类型的列表。
-
-函数的实现部分首先创建一个 unique_ptr，指向一个通过 new 运算符创建的类型为 T 的对象，并传递构造函数所需的参数列表。 std::forward 用于将 args
-转发给构造函数，确保构造函数接收到正确类型的参数。
-
-由于返回的是 unique_ptr，因此可以确保指针所有权的唯一性，避免内存泄漏的问题.
-*/
-template <typename T, typename... Args>
-std::unique_ptr<T> make_unique(Args&&... args) {
-    return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
-}
 
 // 枚举类, 包括 关键字|标识符(变量名)|运算符|数字|字符串|标点符号|...
 enum class TokenType { Keyword, Identifier, Operator, Number, String, Punctuator };
@@ -200,12 +187,38 @@ class Interpreter {
         return result;
     }
 
+    void interpreter(std::string code) {
+        lexical_analysis(code);
+        // syntax_analysis();
+
+        Serial.println(code.c_str());
+        Serial.println("");
+
+        for (const auto& token : tokens) {
+            TokenType type = token->get_type();
+            std::string value = token->get_value();
+
+            if (type == TokenType::Keyword) Serial.print("KEY[");
+            if (type == TokenType::Identifier) Serial.print("IDE[");
+            if (type == TokenType::Operator) Serial.print("OPE[");
+            if (type == TokenType::Number) Serial.print("NUM[");
+            if (type == TokenType::String) Serial.print("STR[");
+            if (type == TokenType::Punctuator) Serial.print("PUN[");
+
+            Serial.print(value.c_str());
+            Serial.println("]");
+            // ...
+        }
+        tokens.clear();
+    }
+
+   private:
     /**
      * @brief 对原始代码进行词法分析，生成token流.
      * @param input 传入原始代码的字符串
      * @return void
      */
-    void parse_tokens(const std::string& input) {
+    void lexical_analysis(const std::string& input) {
         // 通过正则表达式匹配，将字符串input分解为tokens_temp
         // 该正则表达式会匹配单词、非单词非空格字符或空格
         std::vector<std::unique_ptr<std::string>> tokens_temp = extract_strings(input, R"([\w']+|[^\w\s]|\ )");
@@ -245,38 +258,54 @@ class Interpreter {
         }
     }
 
-    void interpreter(std::string code) {
-        parse_tokens(code);
-        Serial.println(code.c_str());
-        Serial.println("");
+    /**
+     * @brief 语法分析, 将tokens转换为语法树.
+     * @return void
+     */
+    // void syntax_analysis() {
+    //     // 获取一个token的数据类型和值
+    //     auto get_token = [](const std::unique_ptr<Token>& token_iterator) -> std::pair<TokenType, std::string> {
+    //         TokenType type = token_iterator->get_type();
+    //         std::string value = token_iterator->get_value();
 
-        for (const auto& token : tokens) {
-            TokenType type = token->get_type();
-            std::string value = token->get_value();
+    //         return std::pair<TokenType, std::string>(type, value);
+    //     };
 
-            if (type == TokenType::Keyword) Serial.print("KEY[");
-            if (type == TokenType::Identifier) Serial.print("IDE[");
-            if (type == TokenType::Operator) Serial.print("OPE[");
-            if (type == TokenType::Number) Serial.print("NUM[");
-            if (type == TokenType::String) Serial.print("STR[");
-            if (type == TokenType::Punctuator) Serial.print("PUN[");
+    //     forward_queue<std::pair<TokenType, std::string>> current_type(2);
 
-            Serial.print(value.c_str());
-            Serial.println("]");
-            // ...
-        }
-        tokens.clear();
-    }
+    //     for (auto pptr = tokens.begin(); pptr != tokens.end(); ++pptr) {
+    //         current_type.push(get_token(*pptr));
 
-   private:
+    //         switch (current_type.begin()->first) {
+    //             case TokenType::Keyword:
+
+    //                 break;
+    //         }
+    //     }
+
+    //     // token = get_token(*i);
+    //     // if (token.first == TokenType::Keyword && (token.second == "num" || token.second == "str")) {
+    //     //     token = get_token(*(i + 1));
+    //     //     if (token.first == TokenType::Operator && token.second == "=") {
+    //     //         token = get_token(*(i + 2));
+    //     //         if (token.first == TokenType::Identifier) {
+    //     //             variables.insert(std::pair<std::string, std::unique_ptr<std::pair<double, std::string>>>(token.second, {}));
+    //     //         }
+    //     //     }
+    //     // }
+    // }
+
+    // 储存 GS Coed 的变量<变量名, 变量值(数字/字符串)>;
+    std::unordered_map<std::string, std::unique_ptr<std::pair<double, std::string>>> variables;
+
     // token流对象;
     std::vector<std::unique_ptr<Token>> tokens;
 
     // 关键字表(没有优先级)
-    std::unordered_set<std::string> keyword_list = {"print", "num", "str"};
+    std::unordered_set<std::string> keyword_list = {"print", "num", "str", "def", "if", "while"};
 
     // 运算符表(没有优先级)
-    std::unordered_set<std::string> operator_list = {"+", "-", "*", "/", "="};
+    std::unordered_set<std::string> operator_list = {"+", "-", "*", "/", "=", "==", "!=", "<", "<=", ">", ">=", "!", "&&", "||"};
 
     // 标点符号表(没有优先级)
     std::unordered_set<std::string> punctuator_list = {",", ";", "(", ")", "{", "}"};
