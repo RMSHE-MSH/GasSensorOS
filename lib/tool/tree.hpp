@@ -4,20 +4,22 @@
 #include <memory>
 #include <vector>
 
-// @note 一个 TreeNode 对象代表了一棵树中的一个节点，其中包含了当前节点的数据以及其所有指向子节点的指针。
+// @note 一个 TreeNode 对象代表了一棵树中的一个节点，其中包含了当前节点的数据和指向它的父节点的指针以及指向其子节点的所有指针。
 template <typename T>
-class TreeNode {
+class TreeNode : public std::enable_shared_from_this<TreeNode<T>> {
    public:
     T node_data;                                         // 储存这个节点的值
+    std::shared_ptr<TreeNode<T>> parent;                 // 储存指向父节点的指针
     std::vector<std::unique_ptr<TreeNode<T>>> children;  // 储存指向这个节点的子节点的指针
 
     /**
      * @brief "TreeNode"树节点构造函数: 创建一个新的节点对象，构造节点.
      * @param data const T&类型的参数，表示根节点的数据(data的数据类型可任意).
+     * @param parent_ptr std::shared_ptr<TreeNode<T>>类型的参数，表示指向父节点的指针, 默认为nullptr.
      * @return void
-     * @note 用法：TreeNode< std::string > node("data");
+     * @note 用法：TreeNode< std::string > node("data", parent_ptr);
      */
-    TreeNode(const T& data) : node_data(data) {}
+    TreeNode(const T& data, std::shared_ptr<TreeNode<T>> parent_ptr = nullptr) : node_data(data), parent(parent_ptr) {}
 
     /**
      * @brief 向当前节点添加一个子节点
@@ -27,7 +29,10 @@ class TreeNode {
      * 向量中。也就是说，addChild() 添加的是一个新的子节点。使用示例：parent_node_ptr->addChild(data);
      */
     void addChild(const T& data) {
-        children.push_back(make_unique<TreeNode>(data));  // 向父节点添加一个指向刚才构造的子节点的指针；
+        // 为类分配内存并创建对象时会自动调用类的构造函数TreeNode(const T& data, std::shared_ptr<TreeNode<T>> parent_ptr = nullptr);
+        auto child = make_unique<TreeNode>(data);  // 构造指向子节点的指针
+        //child->parent = this;
+        children.emplace_back(std::move(child));  // 向父节点添加一个指向刚才构造的子节点的指针；
     }
 
     /**
@@ -61,27 +66,51 @@ class TreeNode {
     }
 
     /**
-     * @brief 删除父节点的一个无孩子子节点
+     * @brief 删除父节点的一个无孩子子节点(删除树叶节点)
      * @param target_child_data const T& 这里需要提供待删除的目标子节点的值
      * @return 删除成功返回true，否则返回false
-     * @note 注意这个函数只支持删除没有子节点的节点，即树枝的末端。可以配合其他函数使用(例如："findChild();").
-     * 若要删除整颗树或部分树枝请使用"deleteTree();"函数. 使用示例：parent_node_ptr->deleteChild(target_child_data);
+     * @note 注意这个函数只支持删除没有子节点的节点，即树枝的末端(树叶)。
+     * 若要删除整颗树或部分树枝请使用"deleteTree();"函数, 如果想通过指针删除树叶节点请使用"deleteNode();"函数.
+     * 使用示例：parent_node_ptr->deleteChild(target_child_data);
      */
     bool deleteChild(const T& target_child_data) {
         auto child_node_ptr = findChild(target_child_data);  // 从当前父节点查找要删除的子节点的指针
-        if (child_node_ptr == nullptr) return false;         // 如果找不到要删除的子节点，返回 false
 
-        if (hasChildren(child_node_ptr) == true) return false;  // 判断这个子节点是否也存在子节点，这里只支持删除没有子节点的节点
+        // 判断这个子节点是否也存在子节点，这里只支持删除没有子节点的节点(树叶), 如果存在子节点或找不到要删除的子节点，返回 false
+        if (child_node_ptr == nullptr || hasChildren(child_node_ptr) == true) return false;
 
         // 遍历当前父节点的所有子节点，在父节点中删除要删除的节点
         for (auto it = children.begin(); it != children.end(); ++it) {
             // 从迭代器获取子节点的指针，如果该指针是要删除的目标子节点则删除它，
             // 由于使用了 std::unique_ptr来管理子节点，所以父节点可以在内存管理方面自动处理子节点的内存释放，不需要手动释放。
             if (it->get() == child_node_ptr) {
-                children.erase(it);
+                children.erase(it);  // 移除的目标子节点
+                parent.reset();      // 将节点的 parent 指针重置为 nullptr(删除parent指针)
                 break;
             }
         }
+
+        return true;
+    }
+
+    /**
+     * @brief 删除一个树叶节点
+     * @return 删除成功返回true，否则返回false
+     * @note
+     * 在这个函数中，首先通过当前节点的值在父节点中查找获取到当前节点的指针，然后判断这个节点是否存在子节点。如果存在子节点，则返回false，因为这个函数只支持删除没有子节点的
+     * 节点（即树叶节点）。如果当前节点是树叶节点，则从父节点的子节点列表中删除该节点。最后，返回true表示节点已经被成功删除。
+     * 使用示例:
+     * node_ptr->deleteNode();
+     */
+    bool deleteNode() {
+        // 获取当前节点的指针,当前节点的指针是储存在它的父节点上的;
+        // 我们获取当前节点的值, 然后在它的父节点搜索这个值, 以获得当前节点的指针
+        TreeNode<T>* node_ptr = parent->findChild(node_data);
+
+        if (hasChildren(node_ptr) == true) return false;  // 判断这个节点是否也存在子节点，这里只支持删除没有子节点的节点(树叶)
+
+        parent->children.erase(node_ptr);  // 从父节点的子节点列表中删除该节点
+        node_ptr->parent.reset();          // 将节点的 parent 指针重置为 nullptr(删除parent指针)
 
         return true;
     }
@@ -162,6 +191,8 @@ class Tree {
         // 返回包含当前节点及其所有子节点的数据的向量
         return tree_data;
     }
+
+    // bool deleteTree() {}
 };
 
 /*
