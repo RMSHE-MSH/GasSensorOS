@@ -8,7 +8,6 @@
 #include <code_interpreter.hpp>
 #include <tree.hpp>
 
-OLED oled;
 Interpreter inte;
 
 void setup() {
@@ -38,14 +37,15 @@ void setup() {
 
     // 遍历树结构
     auto tree_data = tree.traversalBFS(tree.root.get());
-    for (auto& data : tree_data) Serial.println(data.c_str());
+    for (auto& data : tree_data) Serial.println(data.first.c_str());
 
     Serial.println("");
-    node_1_1->deleteChild("node_1_1_1");
-    node_1->deleteChild("node_1_2");
+    // node_1_1->deleteChild("node_1_1_1");
+    // node_1->deleteChild("node_1_2");
+    tree.root->deleteNode(tree.root.get());
 
     tree_data = tree.traversalBFS(tree.root.get());
-    for (auto& data : tree_data) Serial.println(data.c_str());
+    for (auto& data : tree_data) Serial.println(data.first.c_str());
 
     // runKernelTasks();
 }
@@ -53,7 +53,6 @@ void setup() {
 std::string code = "print(\"Hello GScode!\"); num a=0; num b = 1; print(a+b);";
 
 void loop() {
-    oled.print("RMSHE");
     // inte.interpreter(code);
     delay(2000);
 }
