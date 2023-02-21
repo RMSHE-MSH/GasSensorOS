@@ -7,4 +7,4 @@
 
 ### Currently supports ESP32-WROOM series
 
-![]([GasSensorOS](https://github.com/RMSHE-MSH/GasSensorOS/OS_info/GasSensorOS.png))
+![](https://raw.githubusercontent.com/RMSHE-MSH/GasSensorOS/master/OS_info/GasSensorOS.png)
