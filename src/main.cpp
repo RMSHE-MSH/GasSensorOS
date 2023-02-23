@@ -36,13 +36,20 @@ void setup() {
     node_1_1->addChild("node_1_1_1");
 
     // 遍历树结构
-    auto tree_data = tree.traversalBFS(tree.root.get());
+    auto tree_data = tree.traversalDFS(tree.root.get());
     for (auto& data : tree_data) Serial.println(data.first.c_str());
 
     Serial.println("");
     // node_1_1->deleteChild("node_1_1_1");
     // node_1->deleteChild("node_1_2");
-    tree.root->deleteNode(tree.root.get());
+    // tree.deleteNode(node_1_1);
+    Serial.println(tree.getDepth());
+    Serial.println(tree.getDegree());
+    Serial.println(tree.get_degree_of_tree());
+    Serial.println(tree.getBreadth());
+    Serial.println(tree.getSize());
+
+    tree.deleteTree();
 
     tree_data = tree.traversalBFS(tree.root.get());
     for (auto& data : tree_data) Serial.println(data.first.c_str());

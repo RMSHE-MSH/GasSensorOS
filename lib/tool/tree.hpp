@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <make_ptr.hpp>
 #include <memory>
 #include <vector>
@@ -10,15 +11,15 @@ class TreeNode : public std::enable_shared_from_this<TreeNode<T>> {
    public:
     T node_data;                                         // 储存这个节点的值
     std::vector<std::unique_ptr<TreeNode<T>>> children;  // 储存指向这个节点的子节点的指针
+    TreeNode<T>* parent;                                 // 储存指向这个节点的父节点的指针
 
     /**
      * @brief "TreeNode"树节点构造函数: 创建一个新的节点对象，构造节点.
      * @param data const T&类型的参数，表示根节点的数据(data的数据类型可任意).
      * @param parent_ptr std::weak_ptr<TreeNode<T>>类型的参数，表示指向父节点的指针, 默认为nullptr.
-     * @return void
      * @note 用法：TreeNode< std::string > node("data", parent_ptr);
      */
-    TreeNode(const T& data) : node_data(data) {}
+    TreeNode(const T& data, TreeNode<T>* parent = nullptr) : node_data(data), parent(parent) {}
 
     /**
      * @brief 向当前节点添加一个子节点
@@ -28,8 +29,9 @@ class TreeNode : public std::enable_shared_from_this<TreeNode<T>> {
      * 向量中。也就是说，addChild() 添加的是一个新的子节点。使用示例：parent_node_ptr->addChild(data);
      */
     void addChild(const T& data) {
-        // 为类分配内存并创建对象时会自动调用类的构造函数TreeNode(const T& data, std::shared_ptr<TreeNode<T>> parent_ptr = nullptr);
-        children.emplace_back(make_unique<TreeNode>(data));  // 向父节点添加一个指向子节点的指针；
+        // 为类分配内存并创建对象时会自动调用类的构造函数TreeNode(const T& data, TreeNode<T>* parent = nullptr);
+        // parent_node_ptr->addChild(data); 在这个语句中 this 即是 parent_node_ptr;
+        children.emplace_back(make_unique<TreeNode>(data, this));  // 向父节点添加一个指向子节点的指针；
     }
 
     /**
@@ -88,30 +90,6 @@ class TreeNode : public std::enable_shared_from_this<TreeNode<T>> {
 
         return true;
     }
-
-    /**
-     * @brief 递归删除一个节点及其子节点
-     * @param node_ptr TreeNode<T>* 这里需要提供指向待删除节点的指针
-     * @return 删除成功返回true，否则返回false
-     */
-    bool deleteNode(TreeNode<T>* node_ptr) {
-        // 如果节点为空，直接返回
-        if (node_ptr == nullptr) return false;
-
-        // 获取该节点的所有子节点，并遍历它们
-        auto& children = node_ptr->children;
-        for (auto it = children.begin(); it != children.end();) {
-            auto& child = *it;  // it 是迭代器, *it 是迭代器所指的内容.
-
-            // 这里是在判断一个节点是否有孩子.
-            if (hasChildren(child.get()) == true)
-                deleteNode(child.get());  // 如果子节点不是树叶节点(有孩子)，则递归调用 deleteNode
-            else
-                it = children.erase(it);  // 移除树叶节点(如果删除成功，该函数会返回指向被删除元素之后的元素的迭代器)
-        }
-
-        return true;
-    }
 };
 
 template <typename T>
@@ -129,11 +107,14 @@ class Tree {
 
     /**
      * @brief 以深度优先的方式遍历树
-     * @param node_ptr TreeNode<T>* 提供一个节点指针，函数会以该节点为根节点递归遍历所有的子节点(若想遍历整个树提供根节点即可: tree.root.get()).
+     * @param node_ptr TreeNode<T>* 提供一个节点指针，函数会以该节点为根节点递归遍历所有的子节点(若不传参则默认遍历整颗树).
      * @return 返回一个向量, 其中包含从指定节点开始子树的所有节点数据值和对应的指针 std::vector<std::pair<T, TreeNode<T>*>>
      * @note 深度优先遍历算法是递归的，它首先访问根节点，然后再递归地遍历每个子树。在每个节点访问完成后，递归函数回溯到其父节点继续遍历其他子树
      */
-    std::vector<std::pair<T, TreeNode<T>*>> traversalDFS(TreeNode<T>* node_ptr) {
+    std::vector<std::pair<T, TreeNode<T>*>> traversalDFS(TreeNode<T>* node_ptr = nullptr) {
+        // 默认节点指针设置为根节点
+        if (node_ptr == nullptr) node_ptr = root.get();
+
         // 如果节点为空，直接返回一个空向量
         if (node_ptr == nullptr) return {};
 
@@ -158,11 +139,14 @@ class Tree {
 
     /**
      * @brief 以广度优先搜索的方式遍历树。
-     * @param node_ptr TreeNode<T>* 提供一个节点指针，函数会以该节点为根节点递归遍历所有的子节点(若想遍历整个树提供根节点即可: tree.root.get()).
+     * @param node_ptr TreeNode<T>* 提供一个节点指针，函数会以该节点为根节点递归遍历所有的子节点(若不传参则默认遍历整颗树).
      * @return 返回一个向量, 其中包含从指定节点开始子树的所有节点数据值和对应的指针 std::vector<std::pair<T, TreeNode<T>*>>
      * @note 广度优先遍历算法是按层遍历，从根节点开始，先遍历根节点，然后按照从左到右的顺序遍历其子节点，再依次遍历下一层的所有节点。
      */
-    std::vector<std::pair<T, TreeNode<T>*>> traversalBFS(TreeNode<T>* node_ptr) {
+    std::vector<std::pair<T, TreeNode<T>*>> traversalBFS(TreeNode<T>* node_ptr = nullptr) {
+        // 默认节点指针设置为根节点
+        if (node_ptr == nullptr) node_ptr = root.get();
+
         // 当节点为空时返回空向量
         if (node_ptr == nullptr) return {};
 
@@ -190,14 +174,159 @@ class Tree {
         return tree_data;
     }
 
-    bool deleteTree(TreeNode<T>* node_ptr) {
-        std::vector<std::pair<T, TreeNode<T>*>> layer_tree = traversalBFS(node_ptr);
-        reverse(layer_tree.begin(), layer_tree.end());
+    /**
+     * @brief 在树中查找指定数据的节点
+     * @param target_node_data const T&类型的参数，表示要查找的节点数据(值).
+     * @return TreeNode<T>* 指向查找到的节点的指针，如果未找到返回 nullptr.
+     * @note 使用示例：tree.findChild(target_node_data);
+     */
+    TreeNode<T>* findNode(const T& target_node_data) { return root->findChild(target_node_data); }
 
-        for (auto& node : layer_tree) node.second->deleteChild(node.first);
+    /**
+     * @brief 判断指定节点是否存在子节点
+     * @param node_ptr TreeNode<T>* 待判断节点的指针
+     * @return 如果存在子节点返回true, 否则返回false
+     */
+    bool hasChildren(TreeNode<T>* node_ptr) const {
+        return !node_ptr->children.empty();  // 如果 node_ptr->children 不为空，则表示这个节点有子节点。
+    }
+
+    /**
+     * @brief 递归地计算树的深度(高度)
+     * @param node_ptr TreeNode<T>*类型的参数(指向节点的指针)，表示从该节点开始统计树枝的深度，若设为root则为统计整颗树的深度(这也是无传参时的默认设置)
+     * @return uint32_t 返回树的深度.
+     * @note 使用示例：1.统计整颗树的深度：tree.getHeight();    2.统计从 node1 节点开始的树枝深度：tree.getHeight(node1_ptr);
+     */
+    uint32_t getDepth(TreeNode<T>* node_ptr = nullptr) {
+        // 默认节点指针设置为根节点
+        if (node_ptr == nullptr) node_ptr = root.get();
+
+        // 如果节点没有子节点，说明当前节点是叶子节点，返回 1 作为高度
+        if (hasChildren(node_ptr) == false) return 1;
+
+        uint32_t max_depth = 0;  // 定义最大深度（一个树中最少有一个树枝最长）；
+
+        // 如果节点有子节点，则递归计算子节点的高度，并找到其中最大的高度
+        for (const auto& child : node_ptr->children) max_depth = std::max(max_depth, getDepth(child.get()));
+
+        // 返回最大高度加上 1，即为整个树的高度
+        return max_depth + 1;
+    }
+
+    /**
+     * @brief 获取节点的度(对于一个给定的节点，其子节点的数量。一个叶子的度数一定是零。)
+     * @param node_ptr TreeNode<T>*类型的参数(指向节点的指针)，表示获取该节点的子节点的个数，无传参时默认获取根节点的度.
+     * @return uint32_t 返回目标节点的子节点的个数.
+     */
+    uint32_t getDegree(TreeNode<T>* node_ptr = nullptr) {
+        // 默认节点指针设置为根节点
+        if (node_ptr == nullptr) node_ptr = root.get();
+
+        // 直接返回目标节点的子节点个数；
+        return node_ptr->children.size();
+    }
+
+    /**
+     * @brief 获取树的度(树的度是指树中一个节点的最大度, 即树种某个拥有最多子节点的父节点的子节点数)
+     * @return 返回树的度
+     */
+    uint32_t get_degree_of_tree() {
+        uint32_t max_degree = 0;  // 初始化最大度为0
+
+        // 对树进行深度优先遍历获取所有节点的子节点个数，这里将当前最大值max_degree与遍历到的父节点的子节点个数进行比较后取较大值更新回max_degree中.
+        for (auto& node : traversalDFS()) max_degree = std::max(max_degree, node.second->children.size());
+
+        // 遍历完成后返回树中所有结点的度的最大值
+        return max_degree;
+    }
+
+    /**
+     * @brief 获取树或树枝的叶子数量(叶子即没有子节点的节点，也称做终端节点)
+     * @param node_ptr TreeNode<T>*类型的参数(指向节点的指针)，表示获取以该节点为起点的树枝的叶子个数，无传参时默认获取整个树的叶子数量.
+     * @return 返回树或指定树枝的叶子数量
+     */
+    uint32_t getBreadth(TreeNode<T>* node_ptr = nullptr) {
+        // 默认节点指针设置为根节点
+        if (node_ptr == nullptr) node_ptr = root.get();
+
+        uint32_t num_leaves = 0;  // 初始化叶子数为0
+
+        // 对树进行深度优先遍历;
+        for (auto& node : traversalDFS(node_ptr))
+            // 如果一个节点没有子节点，则增加叶子数.
+            if (hasChildren(node.second) == false) ++num_leaves;
+
+        // 返回树的叶子数量
+        return num_leaves;
+    }
+
+    /**
+     * @brief 获取树或树枝的大小
+     * @param node_ptr TreeNode<T>*类型的参数(指向节点的指针)，表示获取以该节点为起点的树枝的节点个数，无传参时默认获取整个树的节点个数.
+     * @return 返回树或指定树枝的节点个数
+     */
+    uint32_t getSize(TreeNode<T>* node_ptr = nullptr) {
+        // 默认节点指针设置为根节点
+        if (node_ptr == nullptr) node_ptr = root.get();
+
+        // 对树进行深度优先遍历然后返回树中的节点数;
+        return traversalDFS(node_ptr).size();
+    }
+
+    /**
+     * @brief 递归删除一个节点及其子节点
+     * @param node_ptr TreeNode<T>* 这里需要提供指向待删除节点的指针
+     * @return 删除成功返回true，否则返回false
+     * @note 使用示例：tree.deleteNode(node_1);
+     */
+    bool deleteNode(TreeNode<T>* node_ptr) {
+        // 如果节点为空，直接返回
+        if (node_ptr == nullptr) return false;
+
+        // 获取该节点的所有子节点，并遍历删除它们
+        auto& children = node_ptr->children;
+        for (auto it = children.begin(); it != children.end();) {
+            auto& child = *it;  // it 是迭代器, *it 是迭代器所指的内容.
+
+            // 这里是在判断一个节点是否有孩子.
+            if (hasChildren(child.get()) == true)
+                deleteNode(child.get());  // 如果子节点不是树叶节点(有孩子)，则递归调用 deleteNode
+            else
+                it = children.erase(it);  // 移除树叶节点(如果删除成功，该函数会返回指向被删除元素之后的元素的迭代器)
+        }
+
+        // 检查当前节点node_ptr是否为根节点，如果是，则返回 false, 这里无法删除根节点.
+        if (node_ptr->parent == nullptr) return false;
+
+        // 在删除完这个节点的孩子后, 删除它自身
+        auto parent = node_ptr->parent;  // 获取当前节点的父节点指针
+
+        // 在父节点的子节点列表中查找并移除当前节点
+        parent->children.erase(
+            // 在容器中查找符合某个条件的元素，并将其移动到容器的末尾
+            std::remove_if(parent->children.begin(),  // 查找的起始位置
+                           parent->children.end(),    // 查找的终止位置
+
+                           // 查找谓词，用于确定哪些元素符合要求。该函数或函数对象接受一个元素作为参数.
+                           // remove_if算法会将child传入这个匿名函数, 如果 child指针与node_ptr相同则返回 true.
+                           [node_ptr](std::unique_ptr<TreeNode<T>>& child) { return child.get() == node_ptr; }),
+            parent->children.end()  // 移除的终止位置
+        );
 
         return true;
     }
+
+    /**
+     * @brief 移除一颗树.
+     * @note 使用示例：tree.deleteTree();
+     */
+    void deleteTree() {
+        deleteNode(root.get());  // 删除根节点的所有子嗣节点;
+        root.reset();            // 移除根节点(将根节点重置为nullptr);
+    }
+
+    // Tree的析构函数
+    ~Tree() { deleteTree(); }
 };
 
 /*
