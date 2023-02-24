@@ -37,14 +37,16 @@ class TreeNode {
     /**
      * @brief 向当前节点添加一个子节点
      * @param data const T&类型的参数，表示节点的数据.
-     * @return void
+     * @return TreeNode<T>* 返回一个指向刚刚添加的子节点的指针
      * @note 当调用 addChild() 函数时，它将创建一个新的 TreeNode 对象，该对象保存传递给函数的数据，并将指向新创建节点的指针添加到当前节点的 children
-     * 向量中。也就是说，addChild() 添加的是一个新的子节点。使用示例：parent_node_ptr->addChild(data);
+     * 向量中。也就是说，addChild() 添加的是一个新的子节点。使用示例：parent_node_ptr->addChild(data) / parent_node_ptr->addChild(data0)->addChild(data1);
      */
-    void addChild(const T& data) {
+    TreeNode<T>* addChild(const T& data) {
         // 为类分配内存并创建对象时会自动调用类的构造函数TreeNode(const T& data, TreeNode<T>* parent = nullptr);
         // parent_node_ptr->addChild(data); 在这个语句中 this 即是 parent_node_ptr;
         children.emplace_back(make_unique<TreeNode>(data, this));  // 向父节点添加一个指向子节点的指针；
+
+        return this->findChild(data);  // 返回一个指向刚刚添加的子节点的指针
     }
 
     /**

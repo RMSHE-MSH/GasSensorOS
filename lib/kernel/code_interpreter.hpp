@@ -1,11 +1,9 @@
 #pragma once
 #include <Arduino.h>
 
-#include <forward_queue.hpp>
 #include <make_ptr.hpp>
 #include <memory>
 #include <regex>
-#include <stack>
 #include <tree.hpp>
 #include <unordered_map>
 #include <unordered_set>
@@ -262,38 +260,46 @@ class Interpreter {
      * @brief 语法分析, 将tokens转换为语法树.
      * @return void
      */
-    // void syntax_analysis() {
-    //     // 获取一个token的数据类型和值
-    //     auto get_token = [](const std::unique_ptr<Token>& token_iterator) -> std::pair<TokenType, std::string> {
-    //         TokenType type = token_iterator->get_type();
-    //         std::string value = token_iterator->get_value();
+    void syntax_analysis() {
+        /**
+         * @brief 获取一个token的数据类型和值
+         * @param token_iterator 传入一个Token类型指针的引用
+         * @return 返回数据类型和值
+         */
+        auto get_token = [](const std::unique_ptr<Token>& token_iterator) -> std::pair<TokenType, std::string> {
+            TokenType type = token_iterator->get_type();      // 获取数据类型
+            std::string value = token_iterator->get_value();  // 获取值
 
-    //         return std::pair<TokenType, std::string>(type, value);
-    //     };
+            return std::pair<TokenType, std::string>(type, value);
+        };
 
-    //     forward_queue<std::pair<TokenType, std::string>> current_type(2);
+        for (auto pptr = tokens.begin(); pptr != tokens.end(); ++pptr) {
+            std::pair<TokenType, std::string> token = get_token(*pptr);
 
-    //     for (auto pptr = tokens.begin(); pptr != tokens.end(); ++pptr) {
-    //         current_type.push(get_token(*pptr));
+            switch (token.first) {
+                case TokenType::Keyword:
+                    if (token.second == "num" || token.second == "str") {
+                        tree.program->addChild("declaration_statement")->addChild(token.second);
+                    }
 
-    //         switch (current_type.begin()->first) {
-    //             case TokenType::Keyword:
+                    break;
+            }
+        }
 
-    //                 break;
-    //         }
-    //     }
+        // token = get_token(*i);
+        // if (token.first == TokenType::Keyword && (token.second == "num" || token.second == "str")) {
+        //     token = get_token(*(i + 1));
+        //     if (token.first == TokenType::Operator && token.second == "=") {
+        //         token = get_token(*(i + 2));
+        //         if (token.first == TokenType::Identifier) {
+        //             variables.insert(std::pair<std::string, std::unique_ptr<std::pair<double, std::string>>>(token.second, {}));
+        //         }
+        //     }
+        // }
+    }
 
-    //     // token = get_token(*i);
-    //     // if (token.first == TokenType::Keyword && (token.second == "num" || token.second == "str")) {
-    //     //     token = get_token(*(i + 1));
-    //     //     if (token.first == TokenType::Operator && token.second == "=") {
-    //     //         token = get_token(*(i + 2));
-    //     //         if (token.first == TokenType::Identifier) {
-    //     //             variables.insert(std::pair<std::string, std::unique_ptr<std::pair<double, std::string>>>(token.second, {}));
-    //     //         }
-    //     //     }
-    //     // }
-    // }
+    // 创建语法树的根节点
+    Tree<std::string> tree("program");
 
     // 储存 GS Coed 的变量<变量名, 变量值(数字/字符串)>;
     std::unordered_map<std::string, std::unique_ptr<std::pair<double, std::string>>> variables;
