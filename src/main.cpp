@@ -23,20 +23,20 @@ void setup() {
     tree.root->addChild("node_2");
 
     // 查找并获取 node_1 节点
-    auto* node_1 = tree.root->findChild("node_1");
+    auto* node_1 = tree.findNode("node_1");
 
     // 向 node_1 添加两个子节点
     node_1->addChild("node_1_1");
     node_1->addChild("node_1_2");
 
     // 查找并获取 node_1_1节点
-    auto* node_1_1 = tree.root->findChild("node_1_1");
+    auto* node_1_1 = tree.findNode("node_1_1");
 
     // 向 node_1_1 添加一个子节点
     node_1_1->addChild("node_1_1_1");
 
     // 遍历树结构
-    auto tree_data = tree.traversalDFS(tree.root.get());
+    auto tree_data = tree.traversalDFS();
     for (auto& data : tree_data) Serial.println(data.first.c_str());
 
     Serial.println("");
@@ -48,10 +48,13 @@ void setup() {
     Serial.println(tree.get_degree_of_tree());
     Serial.println(tree.getBreadth());
     Serial.println(tree.getSize());
+    Serial.println(tree.getLevel(tree.findNode("root")));
+    Serial.println(tree.empty());
+    Serial.println(tree.getWidth());
 
     tree.deleteTree();
 
-    tree_data = tree.traversalBFS(tree.root.get());
+    tree_data = tree.traversalBFS();
     for (auto& data : tree_data) Serial.println(data.first.c_str());
 
     // runKernelTasks();
