@@ -25,15 +25,9 @@ void setup() {
     // 查找并获取 node_1 节点
     auto* node_1 = tree.findNode("node_1");
 
-    // 向 node_1 添加两个子节点
-    node_1->addChild("node_1_1");
+    // 向 node_1 添加两个子节点, 并且向 node_1_1 再添加一个子节点 node_1_1_1
+    node_1->addChild("node_1_1")->addChild("node_1_1_1");
     node_1->addChild("node_1_2");
-
-    // 查找并获取 node_1_1节点
-    auto* node_1_1 = tree.findNode("node_1_1");
-
-    // 向 node_1_1 添加一个子节点
-    node_1_1->addChild("node_1_1_1");
 
     // 遍历树结构
     auto tree_data = tree.traversalDFS();
@@ -59,8 +53,6 @@ void setup() {
 
     // runKernelTasks();
 }
-
-std::string code = "print(\"Hello GScode!\"); num a=0; num b = 1; print(a+b);";
 
 void loop() {
     // inte.interpreter(code);

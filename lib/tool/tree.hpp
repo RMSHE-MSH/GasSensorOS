@@ -128,7 +128,8 @@ class TreeNode {
 template <typename T>
 class Tree {
    public:
-    std::unique_ptr<TreeNode<T>> root;  // 储存树的根节点
+    std::unique_ptr<TreeNode<T>> root;           // 储存树的根节点
+    TreeNode<T>* current_node_ptr = root.get();  // 储存最后一次添加节点后的指针位置(初始化时设为根节点指针)
 
     /**
      * @brief "Tree"树构造函数: 创建一个新的Tree对象，构造根节点.
@@ -137,6 +138,17 @@ class Tree {
      * @note 用法：Tree< std::string > tree0("root");
      */
     Tree(const T& data) : root(make_unique<TreeNode<T>>(data)) {}
+
+    /**
+     * @brief 向当前节点添加一个子节点
+     * @param node_ptr TreeNode<T>*类型的参数(指向节点的指针)，表示在该节点下添加子节点.
+     * @param data const T&类型的参数，表示要添加的节点的数据.
+     * @return TreeNode<T>* 返回一个指向刚刚添加的子节点的指针
+     * @note 当调用 addNode() 函数时，它将创建一个新的 TreeNode 对象，该对象保存传递给函数的数据，并将指向新创建节点的指针添加到当前节点的 children
+     * 向量中。也就是说，addNode() 添加的是一个新的子节点。addNode 与 addChild 不同, addNode 是 Class Tree 的成员, 而 addChild 是 Class TreeNode 的成员,
+     * 它们的使用方法也不同, addNode 将父节点指针作为参数传递, 在添加完子节点后
+     */
+    TreeNode<T>* addNode(TreeNode<std::string>* node_ptr, std::string data) { return current_node_ptr = node_ptr->addChild(data); }
 
     /**
      * @brief 以深度优先的方式遍历树

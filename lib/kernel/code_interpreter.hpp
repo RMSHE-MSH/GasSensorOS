@@ -279,27 +279,16 @@ class Interpreter {
             switch (token.first) {
                 case TokenType::Keyword:
                     if (token.second == "num" || token.second == "str") {
-                        tree.program->addChild("declaration_statement")->addChild(token.second);
+                        addNode(current_node_ptr, "declaration_statement");
                     }
 
                     break;
             }
         }
-
-        // token = get_token(*i);
-        // if (token.first == TokenType::Keyword && (token.second == "num" || token.second == "str")) {
-        //     token = get_token(*(i + 1));
-        //     if (token.first == TokenType::Operator && token.second == "=") {
-        //         token = get_token(*(i + 2));
-        //         if (token.first == TokenType::Identifier) {
-        //             variables.insert(std::pair<std::string, std::unique_ptr<std::pair<double, std::string>>>(token.second, {}));
-        //         }
-        //     }
-        // }
     }
 
     // 创建语法树的根节点
-    Tree<std::string> tree("program");
+    Tree<std::string> syntax_tree{"root"};
 
     // 储存 GS Coed 的变量<变量名, 变量值(数字/字符串)>;
     std::unordered_map<std::string, std::unique_ptr<std::pair<double, std::string>>> variables;
