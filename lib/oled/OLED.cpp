@@ -1,22 +1,29 @@
-/*
-< GasSensorOS OLED >
-Copyright(C) < 2023 > <RMSHE>
-
-This program is free software : you can redistribute it and /or modify
-it under the terms of the GNU Affero General Public License as
-published by the Free Software Foundation, either version 3 of the
-License, or (at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.See the
-GNU Affero General Public License for more details.
-
-You should have received a copy of the GNU Affero General Public License
-along with this program.If not, see < https://www.gnu.org/licenses/>.
-
-Electronic Mail : asdfghjkl851@outlook.com
-*/
+/**
+ * @file OLED.cpp
+ * @date 26.02.2023
+ * @author RMSHE
+ *
+ * < GasSensorOS >
+ * Copyright(C) 2023 RMSHE. All rights reserved.
+ *
+ * This program is free software : you can redistribute it and /or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.If not, see < https://www.gnu.org/licenses/>.
+ *
+ * Electronic Mail : asdfghjkl851@outlook.com
+ *
+ * @note 请注意: 本文件的部分代码并不是我写的, 但是我找不到这些代码的原作者, 如果您是原作者的话请联系我. Please note: I did not write some of the code in
+ * this document, but I cannot find the original author of the code, so please contact me if you are the original author.
+ */
 
 #include <OLED.h>
 
