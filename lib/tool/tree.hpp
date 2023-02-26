@@ -53,10 +53,10 @@ class TreeNode {
     /**
      * @brief "TreeNode"树节点构造函数: 创建一个新的节点对象，构造节点.
      * @param data const T&类型的参数，表示根节点的数据(data的数据类型可任意).
-     * @param parent_ptr std::weak_ptr<TreeNode<T>>类型的参数，表示指向父节点的指针, 默认为nullptr.
-     * @note 用法：TreeNode< std::string > node("data", parent_ptr);
+     * @param parent_node_ptr std::weak_ptr<TreeNode<T>>类型的参数，表示指向父节点的指针, 默认为nullptr.
+     * @note 用法：TreeNode< std::string > node("data", parent_node_ptr);
      */
-    TreeNode(const T& data, TreeNode<T>* parent = nullptr) : node_data(data), parent(parent) {}
+    TreeNode(const T& data, TreeNode<T>* parent_node_ptr = nullptr) : node_data(data), parent(parent_node_ptr) {}
 
     /**
      * @brief 向当前节点添加一个子节点
@@ -66,7 +66,7 @@ class TreeNode {
      * 向量中。也就是说，addChild() 添加的是一个新的子节点。使用示例：parent_node_ptr->addChild(data) / parent_node_ptr->addChild(data0)->addChild(data1);
      */
     TreeNode<T>* addChild(const T& data) {
-        // 为类分配内存并创建对象时会自动调用类的构造函数TreeNode(const T& data, TreeNode<T>* parent = nullptr);
+        // 为类分配内存并创建对象时会自动调用类的构造函数TreeNode(const T& data, TreeNode<T>* parent_node_ptr = nullptr);
         // parent_node_ptr->addChild(data); 在这个语句中 this 即是 parent_node_ptr;
         children.emplace_back(make_unique<TreeNode>(data, this));  // 向父节点添加一个指向子节点的指针；
 
@@ -172,7 +172,7 @@ class Tree {
      * 向量中。也就是说，addNode() 添加的是一个新的子节点。addNode 与 addChild 不同, addNode 是 Class Tree 的成员, 而 addChild 是 Class TreeNode 的成员,
      * 它们的使用方法也不同, addNode 将父节点指针作为参数传递, 在添加完子节点后
      */
-    TreeNode<T>* addNode(TreeNode<std::string>* node_ptr, std::string data) { return current_node_ptr = node_ptr->addChild(data); }
+    TreeNode<T>* addNode(TreeNode<T>* node_ptr, const T& data) { return current_node_ptr = node_ptr->addChild(data); }
 
     /**
      * @brief 以深度优先的方式遍历树

@@ -303,7 +303,7 @@ class Interpreter {
             switch (token.first) {
                 case TokenType::Keyword:
                     if (token.second == "num" || token.second == "str") {
-                        addNode(current_node_ptr, "declaration_statement");
+                        //addNode(current_node_ptr, "declaration_statement");
                     }
 
                     break;
