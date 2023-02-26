@@ -1,4 +1,24 @@
 /*
+< GasSensorOS tree.hpp >
+Copyright(C) < 2023 > <RMSHE>
+
+This program is free software : you can redistribute it and /or modify
+it under the terms of the GNU Affero General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program.If not, see < https://www.gnu.org/licenses/>.
+
+Electronic Mail : asdfghjkl851@outlook.com
+*/
+
+/*
 这段代码实现了一个通用的树数据结构，包括节点的添加、删除、查找、遍历等基本操作。
 该树数据结构由两个类组成：TreeNode和Tree。TreeNode表示一个树节点，包含节点数据、子节点列表、父节点等属性；Tree表示整个树结构，
 包含根节点以及树的遍历、节点查找、节点删除等操作。
