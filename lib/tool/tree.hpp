@@ -53,15 +53,15 @@ class TreeNode {
     /**
      * @brief "TreeNode"树节点构造函数: 创建一个新的节点对象，构造节点.
      * @param data const T&类型的参数，表示根节点的数据(data的数据类型可任意).
-     * @param parent_node_ptr std::weak_ptr<TreeNode<T>>类型的参数，表示指向父节点的指针, 默认为nullptr.
+     * @param parent_node_ptr TreeNode<T>* 类型的参数，表示指向父节点的指针, 默认为nullptr.
      * @note 用法：TreeNode< std::string > node("data", parent_node_ptr);
      */
     TreeNode(const T& data, TreeNode<T>* parent_node_ptr = nullptr) : node_data(data), parent(parent_node_ptr) {}
 
     /**
      * @brief 向当前节点添加一个子节点
-     * @param data const T&类型的参数，表示节点的数据.
-     * @return TreeNode<T>* 返回一个指向刚刚添加的子节点的指针
+     * @param data const T&类型的参数，表示节点的值.
+     * @return TreeNode<T>* 返回一个指向新加子节点的指针
      * @note 当调用 addChild() 函数时，它将创建一个新的 TreeNode 对象，该对象保存传递给函数的数据，并将指向新创建节点的指针添加到当前节点的 children
      * 向量中。也就是说，addChild() 添加的是一个新的子节点。使用示例：parent_node_ptr->addChild(data) / parent_node_ptr->addChild(data0)->addChild(data1);
      */
@@ -91,7 +91,7 @@ class TreeNode {
     }
 
     /**
-     * @brief 在当前节点的子嗣中查找一个指定数据值的节点.
+     * @brief 在当前节点的后裔中查找一个指定数据值的节点.
      * @param target_node_data const T&类型的参数，表示要查找的节点数据(值).
      * @return TreeNode<T>* 指向查找到的节点的指针，如果未找到返回 nullptr.
      * @note 使用示例：parent_node_ptr->findDescendant(target_node_data);
@@ -113,7 +113,7 @@ class TreeNode {
     }
 
     /**
-     * @brief 判断指定节点是否存在子节点
+     * @brief 判断当前节点的一个子节点是否有孩子.
      * @param node_ptr TreeNode<T>* 待判断节点的指针
      * @return 如果存在子节点返回true, 否则返回false
      */
@@ -207,7 +207,7 @@ class Tree {
     }
 
     /**
-     * @brief 以广度优先搜索的方式遍历树。
+     * @brief 以广度优先的方式遍历树。
      * @param node_ptr TreeNode<T>* 提供一个节点指针，函数会以该节点为根节点递归遍历所有的子节点(若不传参则默认遍历整颗树).
      * @return 返回一个向量, 其中包含从指定节点开始子树的所有节点数据值和对应的指针 std::vector<std::pair<T, TreeNode<T>*>>
      * @note 广度优先遍历算法是按层遍历，从根节点开始，先遍历根节点，然后按照从左到右的顺序遍历其子节点，再依次遍历下一层的所有节点。
@@ -294,7 +294,7 @@ class Tree {
     }
 
     /**
-     * @brief 获取节点的度(对于一个给定的节点，其子节点的数量。一个叶子的度数一定是零。)
+     * @brief 获取节点的度(对于一个给定的节点，其子节点的数量称为度. 一个叶子的度数一定是零)
      * @param node_ptr TreeNode<T>*类型的参数(指向节点的指针)，表示获取该节点的子节点的个数，无传参时默认获取根节点的度.
      * @return uint32_t 返回目标节点的子节点的个数.
      */
@@ -389,7 +389,7 @@ class Tree {
     }
 
     /**
-     * @brief 获取树或树枝的大小
+     * @brief 获取树或树枝的大小(节点数)
      * @param node_ptr TreeNode<T>*类型的参数(指向节点的指针)，表示获取以该节点为起点的树枝的节点个数，无传参时默认获取整个树的节点个数.
      * @return 返回树或指定树枝的节点个数
      */
@@ -408,7 +408,7 @@ class Tree {
     bool empty() { return root == nullptr ? true : false; }
 
     /**
-     * @brief 递归删除一个节点及其子节点
+     * @brief 递归删除一个节点及其后裔
      * @param node_ptr TreeNode<T>* 这里需要提供指向待删除节点的指针
      * @return 删除成功返回true，否则返回false
      * @note 使用示例：tree.deleteNode(node_1);
