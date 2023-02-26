@@ -128,7 +128,7 @@ TreeNode<T>* parent_node_ptr->TreeNode<T>* addChild(const T& data);
 
 以下代码演示了如何直接向根节点添加子节点.
 
-*The above code demonstrates how to add a child node directly to the root node.*
+*The following code demonstrates how to add a child node directly to the root node.*
 
 ```c++
 #include <tree.hpp>
@@ -152,6 +152,8 @@ ROOT
 
 以下代码演示了如何通过在树中查找节点的方式添加子节点.
 
+*The following code demonstrates how to add a child node by finding a node in the tree.*
+
 ```c++
 #include <tree.hpp>
 #include <string>
@@ -168,7 +170,7 @@ void setup() {
     root_ptr->addChild("node_1");
     
     // 查找并获取指向值为"node_1"的节点的指针, 然后向该节点添加一个值为"node_1_1"的子节点.
-    // Find and get a pointer to the node with the value "node_1", then add a child 	node with the value "node_1_1" to that node.
+    // Find and get a pointer to the node with the value "node_1", then add a child node with the value "node_1_1" to that node.
     tree.findNode("node_1")->addChild("node_1_1");
 }
 ```
@@ -176,7 +178,7 @@ void setup() {
 ```
 ROOT
 |--node_1
-	|--node_1_1
+   |--node_1_1
 ```
 
 
