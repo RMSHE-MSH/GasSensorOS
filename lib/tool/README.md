@@ -3,27 +3,21 @@
 ---
 # 协议 - License
 
- * *@file tree.hpp*
- * *@date 26.02.2023*
- * *@author RMSHE*
- * *< GasSensorOS >*
- * *Copyrght(C) 2023 RMSHE. All rights reserved.*
- * *This program is free software : you can redistribute it and /or modify*
- * *it under the terms of the GNU Affero General Public License as*
- * *published by the Free Software Foundation, either version 3 of the*
- * *License, or (at your option) any later version.*
- * *This program is distributed in the hope that it will be useful,*
- * *but WITHOUT ANY WARRANTY; without even the implied warranty of*
- * *MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.See the*
- * *GNU Affero General Public License for more details.*
- * *You should have received a copy of the GNU Affero General Public License*
- * *along with this program.If not, see < https://www.gnu.org/licenses/>.*
- * *Electronic Mail : asdfghjkl851@outlook.com*
+> @file tree.hpp
+> @date 26.02.2023
+> @author RMSHE
+>
+> < GasSensorOS >
+> Copyrght(C) 2023 RMSHE. All rights reserved.
+>
+> This program is free software : you can redistribute it and /or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details. You should have received a copy of the GNU Affero General Public License along with this program. If not, see < https://www.gnu.org/licenses/>.
+>
+> Electronic Mail : asdfghjkl851@outlook.com
 
 
 # 概述 - Overview
 
-这是一个轻量级的通用树数据结构容器, 源代码见`tree.hpp`文件. 该模块是 `GasSensorOS` 的组件之一, 最初是为了 `GS Code` 代码解释器而开发的. 
+这是一个轻量级的通用树数据结构容器, 源代码见`tree.hpp`文件. 该模块是 `GasSensorOS` 的组件之一, 最初是为了 `GS_Code` 代码解释器而开发的. 
 
 这个类实现了一个通用的树数据结构，包括节点的添加、删除、查找、遍历等基本操作。该树数据结构由两个类组成：`TreeNode`和`Tree`。`TreeNode`表示一树节点，包含节点数据、子节点列表、父节点等属性；`Tree`表示整个树结构，包含根节点以及树的遍历、节点查找、节点删除等操作。具体来说，`TreeNode`类包含了添加子节点、查找子节点、删除子节点等方法。其中，添加子节点使用了`C++11`中的智能指针`std::unique_ptr`，确保了子节点的内存管理安全；查找子节点使用了递归的方式，深度优先遍历整个子树；删除子节点则使用了迭代的方式，遍历整个子树进行删除操作。`Tree`类包含了树的遍历、节点查找、节点删除等方法。其中，遍历操作分为深度优先遍历和广度优先遍历两种方式；节点查找操作同样使用了递归的方式，在根节点开始向下搜索整个子树；节点删除操作则使用了递归的方式，在整个子树中进行删除操作。总的来说，该树数据结构提供了基本的树操作，能够满足一些基本的需求。但是需要注意的是，该树数据结构没有进行任何的平衡操作，因此对于较大的树可能会存在效率问题。
 
@@ -78,7 +72,7 @@
 | traversalDFS       | 以深度优先的方式遍历树. <br/>*Traverses the tree in a depth-first style.* |
 | traversalBFS       | 以广度优先的方式遍历树. <br/>*Traversing the tree in a breadth-first style.* |
 | findNode           | 在树中查找节点. <br/>*Find nodes in the tree.*               |
-| hasChildren        | 判断指定节点是否存有孩子. <br/>*Determine if the specified node has children.* |
+| hasChildren        | 判断指定节点是否有孩子. <br/>*Determine if the specified node has children.* |
 | getDepth           | 递归地计算树的深度(高度)(默认统计整颗树的深度). <br/>*Recursively calculates the depth (height) of the tree (by default the depth of the whole tree is counted).* |
 | getDegree          | 获取节点的度(对于一个给定的节点，其子节点的数量称为度. 一个叶子的度数一定是零) <br/>*Get the degree of a node (for a given node, the number of its children is called the degree. The degree of a leaf must be zero)* |
 | get_degree_of_tree | 获取树的度(树的度是指树中一个节点的最大度) <br/>*Get the degree of the tree (the degree of the tree is the maximum degree of a node in the tree).* |
@@ -137,7 +131,7 @@ TreeNode<T>* parent_node_ptr->TreeNode<T>* addChild(const T& data);
 void setup() {
 	Tree<std::string> tree("ROOT");
     
-    // 向根节点添加一个值为"node_1的"子节点.
+    // 向根节点添加一个值为"node_1"的子节点.
     // Add a child node with the value "node_1" to the root node.
     tree.root->addChild("node_1");
 }
@@ -150,9 +144,9 @@ ROOT
 
 ### 例2 - Example 2
 
-以下代码演示了如何通过在树中查找节点的方式添加子节点.
+以下代码演示了如何通过在树中以查找节点的方式添加子节点.
 
-*The following code demonstrates how to add a child node by finding a node in the tree.*
+*The following code demonstrates how to add a child node in the tree by found the node.*
 
 ```c++
 #include <tree.hpp>
@@ -175,11 +169,300 @@ void setup() {
 }
 ```
 
-```
+```C++
 ROOT
 |--node_1
    |--node_1_1
 ```
+### 例3 - Example 3
+
+以下代码演示了如何利用`addChild`的返回值.
+
+*The following code demonstrates how to use the return value of `addChild`.*
+
+```c++
+#include <tree.hpp>
+#include <string>
+#include <Arduino.h>
+
+void setup() {
+    Serial.begin(115200);
+    
+	Tree<std::string> tree("ROOT");
+    
+    // 向根节点添加一个值为"node_1"子节点. 我们将 addChild 返回的指针赋值给 node_1_ptr, 这个指针即指向 node_1 的指针.
+    // Add a child node with the value "node_1" to the root node. We assign the pointer returned by addChild to node_1_ptr, this pointer is the pointer to node_1.
+    auto* node_1_ptr = tree.root->addChild("node_1");
+    
+    // 打印 "node_1" 节点的值.
+    Serial.println(node_1_ptr->node_data.c_str());
+}
+```
+
+```C++
+ROOT
+|--node_1
+```
+```C++
+Output:
+
+node_1
+```
+---
+# `findChild`
+
+ 在当前节点的子节点中查找节点. <br/>*Find a node among the children of the current node.*
+
+```c++
+TreeNode<T>* parent_node_ptr->TreeNode<T>* findChild(const T& target_child_data);
+```
+## 参数 - Parameters
+
+`parent_node_ptr`
+
+指向父节点的指针, 表示查找该父节点的孩子.<br/>*A pointer to the parent node, which means to find the child of the parent node.*
+
+`target_child_data`
+
+表示待查找节点的值. <br/>*Indicates the value of the node to be find.*
+
+## 返回值 - Return value
+
+返回指向查找到的节点的指针，如果未找到则返回 `nullptr`.<br/>*Returns a pointer to the found node, or `nullptr` if it is not found.*
+
+## 注解 - Remarks
+
+通过用户提供的`parent_node_ptr`指针, 该函数会遍历该指针指向节点的`children`并且访问每个孩子的`node_data`与用户提供的`target_child_data`进行比较, 如果它们相等则返回指向查找到的节点的指针.
+
+
+
+*With the user-supplied `parent_node_ptr` pointer, the function iterates through the `children` of the node pointed to by the pointer and accesses the `node_data` of each child to compare with the user-supplied `target_child_data`, returning a pointer to the found node if they are same.*
+
+## 示例 - Example
+
+```c++
+#include <tree.hpp>
+#include <string>
+
+void setup() {
+	Tree<std::string> tree("ROOT");
+    
+    tree.root->addChild("node_1");
+    
+    // 在根节点的孩子中查找并获取指向值为"node_1"的节点的指针.
+    // Find and get a pointer to the node with the value "node_1" among the children of the root node.
+    auto* node_1_ptr = tree.root->findChild("node_1");
+    
+    // 向 node_1 节点添加一个值为"node_1_1"的子节点.
+    // Add a child node with value "node_1_1" to the node_1 node.
+    node_1_ptr->addChild("node_1_1");
+    
+    // 在 node_1 节点的孩子中查找并获取指向值为"node_1_1"的节点的指针, 然后向该节点添加一个值为"node_1_1_1"的子节点.
+    // Find and get a pointer to the node with the value "node_1_1" among the children of node_1, and add a child node with the value "node_1_1_1" to that node.
+    node_1_ptr->findChild("node_1_1")->addChild("node_1_1_1");
+}
+```
+```C++
+ROOT
+|--node_1
+   |--node_1_1
+      |--node_1_1_1
+```
+
+---
+
+# `findDescendant`
+
+在当前节点的后裔中查找节点. <br/>*Find a node among the descendants of the current node.*
+```c++
+TreeNode<T>* parent_node_ptr->TreeNode<T>* findDescendant(const T& target_node_data);
+```
+## 参数 - Parameters
+
+`parent_node_ptr`
+
+指向父节点的指针, 表示查找该父节点的后裔.<br/>*A pointer to the parent node, indicating to find the descendants of the parent node.*
+
+`target_node_data`
+
+表示待查找节点的值. <br/>*Indicates the value of the node to be find.*
+
+## 返回值 - Return value
+
+返回指向查找到的节点的指针，如果未找到则返回 `nullptr`.<br/>*Returns a pointer to the found node, or `nullptr` if it is not found.*
+
+## 注解 - Remarks
+
+这是一个在树结构中查找指定节点的方法，方法使用深度优先遍历，递归地在当前节点的子节点中查找指定数据，直到找到该数据或者遍历完整棵树。如果找到指定数据的节点，则返回该节点的指针；如果未找到，则返回 `nullptr`. (`findDescendant`与`findChild`的不同之处在于: `findChild`的查找范围为父节点的所有孩子, 而`findDescendant`的查找范围为父节点之后的所有节点.)
+
+
+
+*This is a method to find a specified node in a tree structure. The method uses a depth-first traversal to recursively find the specified data in the children of the current node until the data is found or the entire tree is traversed. If the node with the specified data is found, it returns a pointer to that node; if not, it returns `nullptr`.* *(The difference between `findDescendant` and `findChild` is that `findChild` looks for all children of the parent node, while `findDescendant` looks for all nodes after the parent node.)*
+
+## 示例 - Example
+
+```c++
+#include <tree.hpp>
+#include <string>
+
+void setup() {
+	Tree<std::string> tree("ROOT");
+    
+    tree.root->addChild("node_1")->addChild("node_1_1")->addChild("node_1_1_1");
+    
+    // 在根节点的后裔中查找并获取指向值为"node_1_1_1"的节点的指针.
+    // Find and get a pointer to the node with the value "node_1_1_1" among the descendants of the root node.
+    auto* node_1_1_1_ptr = tree.root->findDescendant("node_1_1_1");
+    
+    node_1_1_1_ptr->addChild("node_1_1_1_1");
+    node_1_1_1_ptr->addChild("node_1_1_1_2");
+}
+```
+```c++
+ROOT
+|--node_1
+   |--node_1_1
+      |-node_1_1_1
+         |-node_1_1_1_1
+         |-node_1_1_1_2
+```
+
+---
+
+# `hasChildren`
+
+ 判断在当前节点的指定子节点是否有孩子. <br/>*Determine if a child of the current node has children.*
+
+```c++
+TreeNode<T>* node_ptr->bool hasChildren();
+```
+## 参数 - Parameters
+
+`node_ptr`
+
+指向待判断节点的指针.<br/>*Pointer to the node to be judged*.
+
+## 返回值 - Return value
+
+如果存在子节点返回`true`, 否则返回`false`.<br/>*Returns `true` if a child node exists, otherwise returns `false`.*
+
+## 注解 - Remarks
+
+每个节点的子节点是以这种方式储存的: `std::vector<std::unique_ptr<TreeNode<T>>> children;`(即储存的是指向这个节点的子节点的指针). 本方法只需判断 `children`向量是否为空即可. 如果 `node_ptr->children` 不为空，则表示这个节点有孩子. 
+
+
+
+*The children of each node are stored in this way: `std::vector<std::unique_ptr<TreeNode<T>>> children;` (i.e. a pointer to the children of this node is stored). This method simply determines if the `children` vector is empty. If `node_ptr->children` is not empty, then the node has children.*
+
+## 示例 - Example
+
+```c++
+#include <tree.hpp>
+#include <string>
+#include <Arduino.h>
+
+void setup() {
+    Serial.begin(115200);
+    
+	Tree<std::string> tree("ROOT");
+    
+    auto* node_1_ptr = tree.root->addChild("node_1");
+    
+    Serial.print("ROOT: ");
+    Serial.println(tree.root->hasChildren() ? "With children" : "No children");
+    
+    Serial.print("node_1: ");
+    Serial.println(node_1_ptr->hasChildren() ? "With children" : "No children");
+}
+```
+```C++
+ROOT
+|--node_1
+```
+
+```C++
+Output:
+
+ROOT: With children
+node_1: No children
+```
+---
+
+# `T`
+
+
+```c++
+
+```
+## 参数 - Parameters
+
+`parent_node_ptr`
+
+
+
+`target_node_data`
+
+
+
+## 返回值 - Return value
+
+
+
+## 注解 - Remarks
+
+
+
+## 示例 - Example
+
+```c++
+#include <tree.hpp>
+#include <string>
+
+void setup() {
+	Tree<std::string> tree("ROOT");
+}
+```
+```
+
+```
+
+---
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -257,4 +540,10 @@ void setup() {
 ```c++
 TreeNode<T>* addNode(TreeNode<T>* node_ptr, const T& data);
 ```
+
+
+
+
+
+
 

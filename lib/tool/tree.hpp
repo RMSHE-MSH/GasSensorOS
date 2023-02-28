@@ -79,7 +79,7 @@ class TreeNode {
      * @return TreeNode<T>* 指向查找到的节点的指针，如果未找到返回 nullptr.
      * @note 使用示例：parent_node_ptr->findChild(target_child_data);
      */
-    TreeNode<T>* findChild(const T& target_child_data) {
+    TreeNode<T>* [findChild](const T& target_child_data) {
         // 遍历当前节点的每一个子节点
         for (auto& child : children) {
             if (child->node_data == target_child_data) {
@@ -116,9 +116,10 @@ class TreeNode {
      * @brief 判断当前节点的一个子节点是否有孩子.
      * @param node_ptr TreeNode<T>* 待判断节点的指针
      * @return 如果存在子节点返回true, 否则返回false
+     * @note 使用方法: node_ptr->hasChildren();
      */
-    bool hasChildren(TreeNode<T>* node_ptr) const {
-        return !node_ptr->children.empty();  // 如果 node_ptr->children 不为空，则表示这个节点有子节点。
+    bool hasChildren() const {
+        return !this->children.empty();  // 如果 node_ptr->children 不为空，则表示这个节点有子节点。
     }
 
     /**
