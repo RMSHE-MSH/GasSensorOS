@@ -79,7 +79,7 @@ class TreeNode {
      * @return TreeNode<T>* 指向查找到的节点的指针，如果未找到返回 nullptr.
      * @note 使用示例：parent_node_ptr->findChild(target_child_data);
      */
-    TreeNode<T>* [findChild](const T& target_child_data) {
+    TreeNode<T>* findChild(const T& target_child_data) {
         // 遍历当前节点的每一个子节点
         for (auto& child : children) {
             if (child->node_data == target_child_data) {
@@ -127,7 +127,7 @@ class TreeNode {
      * @param target_child_data const T& 这里需要提供待删除的目标子节点的值
      * @return 删除成功返回true，否则返回false
      * @note 注意这个函数只支持删除没有子节点的节点，即树枝的末端(树叶)。
-     * 若要删除整颗树或部分树枝请使用"deleteTree();"函数
+     * 若要删除整颗树或部分树枝请使用"deleteNode();"函数
      * 使用示例：parent_node_ptr->deleteChild(target_child_data);
      */
     bool deleteChild(const T& target_child_data) {
@@ -169,15 +169,16 @@ class Tree {
      * @param node_ptr TreeNode<T>*类型的参数(指向节点的指针)，表示在该节点下添加子节点.
      * @param data const T&类型的参数，表示要添加的节点的数据.
      * @return TreeNode<T>* 返回一个指向刚刚添加的子节点的指针
-     * @note 当调用 addNode() 函数时，它将创建一个新的 TreeNode 对象，该对象保存传递给函数的数据，并将指向新创建节点的指针添加到当前节点的 children
-     * 向量中。也就是说，addNode() 添加的是一个新的子节点。addNode 与 addChild 不同, addNode 是 Class Tree 的成员, 而 addChild 是 Class TreeNode 的成员,
-     * 它们的使用方法也不同, addNode 将父节点指针作为参数传递, 在添加完子节点后
+     * @note 当调用 `addNode()` 函数时，它将创建一个新的 `TreeNode`
+     * 对象，该对象保存传递给函数的数据，并将指向新创建节点的指针添加到当前节点的`children`向量中。也就是说，`addNode()` 添加的是一个新的子节点。`addNode`
+     * 与 `addChild` 不同, `addNode` 是 `Tree class` 的成员, 而 `addChild` 是`TreeNode class` 的成员, `addNode` 将父节点指针作为参数传递.
+     * 该函数还会将指向新增节点的指针保存到类成员变量 `current_node_ptr`中,以便用户更清楚当前树的编辑位置.
      */
     TreeNode<T>* addNode(TreeNode<T>* node_ptr, const T& data) { return current_node_ptr = node_ptr->addChild(data); }
 
     /**
      * @brief 以深度优先的方式遍历树
-     * @param node_ptr TreeNode<T>* 提供一个节点指针，函数会以该节点为根节点递归遍历所有的子节点(若不传参则默认遍历整颗树).
+     * @param node_ptr TreeNode<T>* 提供一个节点指针，函数会以该节点为根节点递归遍历它所有的子嗣节点(若不传参则默认遍历整颗树).
      * @return 返回一个向量, 其中包含从指定节点开始子树的所有节点数据值和对应的指针 std::vector<std::pair<T, TreeNode<T>*>>
      * @note 深度优先遍历算法是递归的，它首先访问根节点，然后再递归地遍历每个子树。在每个节点访问完成后，递归函数回溯到其父节点继续遍历其他子树
      */

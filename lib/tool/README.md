@@ -68,7 +68,7 @@
 
 | 名称 - Name        | 说明 - Description                                           |
 | :----------------- | :----------------------------------------------------------- |
-| addNode            | 向节点添加子节点. <br/>*Adds a child node to a node.*        |
+| addNode            | 向节点添加子节点, 并将指向新增节点的指针保存到类成员变量 `current_node_ptr` 中. <br/>*Add a child node to the node, and save the pointer to the new node in the class member variable `current_node_ptr`.* |
 | traversalDFS       | 以深度优先的方式遍历树. <br/>*Traverses the tree in a depth-first style.* |
 | traversalBFS       | 以广度优先的方式遍历树. <br/>*Traversing the tree in a breadth-first style.* |
 | findNode           | 在树中查找节点. <br/>*Find nodes in the tree.*               |
@@ -368,9 +368,13 @@ void setup() {
     
     auto* node_1_ptr = tree.root->addChild("node_1");
     
+    // 判断根节点是否有孩子.
+    // Determine if the root node has children.
     Serial.print("ROOT: ");
     Serial.println(tree.root->hasChildren() ? "With children" : "No children");
     
+    // 判断 node_1_ptr 是否有孩子.
+    // Determine if the node_1_ptr node has children.
     Serial.print("node_1: ");
     Serial.println(node_1_ptr->hasChildren() ? "With children" : "No children");
 }
@@ -388,6 +392,262 @@ node_1: No children
 ```
 ---
 
+# `deleteChild`
+
+删除父节点的一个无孩子节点(删除树叶节点). <br/>*Delete a childless node of the parent node (delete a leaf node).*
+
+
+```c++
+TreeNode<T>* parent_node_ptr->bool deleteChild(const T& target_child_data);
+```
+## 参数 - Parameters
+
+`parent_node_ptr`
+
+指向父节点的指针, 表示我们删除这个父节点的一个孩子.<br/>*A pointer to a parent node means we delete a child of that parent node.*
+
+`target_node_data`
+
+指向父节点的孩子的指针, 表示要删除的孩子.<br/>*A pointer to a child of the parent node, indicating the child to be deleted.*
+
+## 返回值 - Return value
+
+删除成功返回`true`，否则返回`false`.<br/>*Returns `true` for successful deletion, otherwise returns `false`.*
+
+## 注解 - Remarks
+
+这个函数首先通过调用 `findChild()` 函数查找要删除的子节点。如果找不到这个子节点，或者这个子节点有其他子节点，那么删除操作会失败，函数会返回 false。如果找到了要删除的子节点，并且它没有其他子节点，那么函数会遍历当前节点的所有子节点，找到要删除的子节点并删除它。在删除节点时，由于使用了 `std::unique_ptr` 来管理子节点，所以父节点可以在内存管理方面自动处理子节点的内存释放，不需要手动释放。最后，如果删除成功，函数会返回 true。
+
+需要注意的是，这个函数只支持删除没有子节点的节点，即树枝的末端(树叶)。如果要删除整棵树或部分树枝，请使用 `deleteNode()` 函数。
+
+
+
+*This function first uses the `findChild()` function to search for the child node to be deleted. If the child node is not found, or if it has other child nodes, the delete operation will fail and the function will return false. If the child node to be deleted is found and it does not have any other child nodes, the function will traverse all of the current node's child nodes, find the one to be deleted, and remove it. When deleting the node, because `std::unique_ptr` is used to manage the child node, the parent node can automatically handle the memory release of the child node without the need for manual release. Finally, if the deletion is successful, the function will return true.*
+
+*It should be noted that this function only supports deleting nodes without child nodes, i.e. the end of the branch (leaf) of the tree. If you want to delete the entire tree or part of the branch, please use the `deleteNode()` function.*
+
+## 示例 - Example
+
+```c++
+#include <tree.hpp>
+#include <string>
+
+void setup() {
+	Tree<std::string> tree("ROOT");
+    
+    tree.root->addChild("node_1")->addChild("node_1_1");
+    
+    auto* node_1_ptr = tree.root->findChild("node_1");
+    
+    // 删除 node_1 的子节点 node_1_1.
+    // Delete the child node node_1_1 of node_1.
+    node_1_ptr->deleteChild("node_1_1");
+}
+```
+```c++
+ROOT
+|--node_1
+```
+
+---
+# `Tree`构造函数 - `Tree` constructor
+
+构造一个树, 创建树的第一个节点(根节点). <br/>*Construct a tree, creating the first node (`root`) of the tree.*
+
+
+```c++
+Tree(const T& data) : root(make_unique<TreeNode<T>>(data)) {}
+```
+## 参数 - Parameters
+
+`data`
+
+表示根节点的值.<br/>*Indicates the value of the root node.*
+
+## 返回值 - Return value
+
+`void`
+
+## 注解 - Remarks
+
+构造函数采用了成员初始化列表的方式来初始化成员变量。其中，`root` 是一个 `std::unique_ptr` 类型的智能指针，用于管理根节点。`make_unique<TreeNode<T>>(data)` 是一个 C++11 引入的标准函数，用于在堆上创建一个新的节点，并返回一个 `std::unique_ptr` 智能指针，该智能指针会自动管理这个新节点的内存。函数的参数 `data` 表示根节点的数据。
+
+因此，这段代码的作用是在堆上创建一个新的树根节点，并用 `std::unique_ptr` 智能指针来管理这个节点的内存。同时，将参数 `data` 的值传递给新节点的构造函数，用来初始化根节点的数据。
+
+
+
+*The constructor uses member initialization list to initialize its member variables. `root` is a smart pointer of type `std::unique_ptr`, used to manage the root node of the binary tree. `make_unique<TreeNode<T>>(data)` is a standard function introduced in C++11, which creates a new node on the heap and returns a `std::unique_ptr` smart pointer that automatically manages the memory of the new node. The parameter `data` represents the data of the root node.*
+
+*Therefore, this code creates a new tree root node on the heap, and uses `std::unique_ptr` smart pointer to manage the memory of this node. At the same time, it passes the value of the parameter `data` to the constructor of the new node to initialize the data of the root node.*
+
+## 示例 - Example
+
+```c++
+#include <tree.hpp>
+#include <string>
+
+void setup() {
+    // 构造一个树, 创建树的第一个节点(根节点). 
+    // Construct a tree, creating the first node (root) of the tree.
+	Tree<std::string> tree("ROOT");
+}
+```
+```c++
+ROOT
+```
+
+---
+# `addNode`
+
+向节点添加子节点, 并将指向新增节点的指针保存到类成员变量 `current_node_ptr` 中. <br/>*Add a child node to the node, and save the pointer to the new node in the class member variable `current_node_ptr`.*
+
+
+```c++
+ TreeNode<T>* addNode(TreeNode<T>* node_ptr, const T& data);
+```
+## 参数 - Parameters
+
+`node_ptr`
+
+表示在该节点下添加子节点.<br/>*Indicates that a child node is added under this node.*
+
+`data`
+
+表示节点的值, 即节点储存的内容. 其数据类型等于实例化树容器时的数据类型(可以是C++STL中的任意数据类型). <br/>*Represents the value of a node, i.e. the content stored in the node. Its data type is equal to the data type of the tree container when it is instantiated (it can be any data type in C++STL).*
+
+## 返回值 - Return value
+
+返回一个指向新加子节点的指针.<br/>*Returns a pointer to the newly added child node.*
+
+## 注解 - Remarks
+
+当调用 `addNode()` 函数时，它将创建一个新的 `TreeNode` 对象，该对象保存传递给函数的数据，并将指向新创建节点的指针添加到当前节点的 `children` 向量中。也就是说，`addNode()` 添加的是一个新的子节点。`addNode` 与 `addChild` 不同, `addNode` 是 `Tree class` 的成员, 而 `addChild` 是 `TreeNode class` 的成员, `addNode` 将父节点指针作为参数传递. 该函数还会将指向新增节点的指针保存到类成员变量 `current_node_ptr` 中, 以便用户更清楚当前树的编辑位置.
+
+
+
+*When the `addNode()` function is called, it creates a new `TreeNode` object, which holds the data passed to the function and adds a pointer to the newly created node to the `children` vector of the current node. In other words, `addNode()` adds a new child node. Unlike `addNode`, which is a member of the `Tree class`, and `addChild`, which is a member of the `TreeNode class`, `addNode` passes the parent node pointer as an argument. This function also saves a pointer to the new node in the class member variable `current_node_ptr`, so that the user is more aware of the current edit position of the tree.*
+
+## 示例 - Example
+
+### 例1 - Example 1
+
+该例子演示了如何使用 `addNode();` 函数添加一个节点.<br/>*This example demonstrates how to add a node using the `addNode();` function.*
+
+```c++
+#include <tree.hpp>
+#include <string>
+
+void setup() {
+	Tree<std::string> tree("ROOT");
+    
+    // 向根节点添加一个值为"node_1"的子节点.
+    // Add a child node with the value "node_1" to the root node.
+    tree.addNode(tree.root, "node_1");
+}
+```
+```c++
+ROOT
+|--node_1
+```
+### 例2 - Example 2
+
+该例子演示了如何利用`addNode()`在添加新节点后会将指向新增节点的指针更新到`current_node_ptr`的特性.<br/>*This example shows how to take advantage of the fact that `addNode()` updates the pointer to the new node in `current_node_ptr` after it is added.*
+
+```c++
+#include <tree.hpp>
+#include <string>
+
+void setup() {
+	Tree<std::string> tree("ROOT");
+    
+    // 这里利用了 tree 类成员变量 current_node_ptr 的初始值为指向根节点的指针, 然后向根节点添加一个值为"node_1"的子节点.
+    // The initial value of the tree class member variable current_node_ptr is a pointer to the root node, and a child node with the value "node_1" is added to the root node.
+    tree.addNode(tree.current_node_ptr, "node_1");
+    
+    // 上一次 addNode() 的调用时, 在向根节点添加子节点后, 函数就将指向新增节点的指针保存到类成员变量 current_node_ptr 中, 此时 current_node_ptr 为指向 node_1 都指针, 于是这条语句是在向 node_1 添加一个值为"node_1_1"的子节点.
+    // In the last addNode() call, after adding a child node to the root node, the function saves a pointer to the new node in the class member variable current_node_ptr, which is a pointer to node_1, so this statement is adding a child node to node_1 with the value "node_1_1". to node_1.
+    tree.addNode(tree.current_node_ptr, "node_1_1");
+}
+```
+```c++
+ROOT
+|--node_1
+   |--node_1_1
+```
+
+
+---
+# `traversalDFS`
+
+以深度优先的方式遍历树. <br/>*Traverses the tree in a depth-first style.*
+
+
+```c++
+std::vector<std::pair<T, TreeNode<T>*>> traversalDFS(TreeNode<T>* node_ptr = nullptr);
+```
+## 参数 - Parameters
+
+`node_ptr`
+
+提供一个节点指针，函数会以该节点为根节点递归遍历它所有的子嗣节点(若不传参则默认遍历整颗树).<br/>*Provide a node pointer, the function will use this node as the root node to recursively traverse all its descendant nodes (if no parameter is passed, the entire tree will be traversed by default).*
+
+## 返回值 - Return value
+
+返回一个向量, 其中包含从指定节点开始子树的所有值和对应的指针.<br/>*Returns a vector containing all values and corresponding pointers for the subtree starting from the specified node.*
+
+## 注解 - Remarks
+
+这段代码定义了一个以深度优先方式遍历树的函数`traversalDFS`，可以遍历整个树或从指定节点开始递归遍历其所有子节点，返回一个包含所有遍历节点数据值和对应指针的向量。具体实现是通过递归遍历当前节点的每个子节点，将子节点的子树数据插入到包含当前节点的向量中。函数首先判断传入的节点指针是否为空，为空则默认遍历整个树。最后返回包含所有节点数据的向量。
+
+深度优先遍历算法是递归的，它首先访问根节点，然后再递归地遍历每个子树。在每个节点访问完成后，递归函数回溯到其父节点继续遍历其他子树.
+
+
+
+*This code defines a function called `traversalDFS` that traverses a tree in a depth-first manner. It can traverse the entire tree or recursively traverse all its child nodes starting from a specified node, and returns a vector containing the data values and corresponding pointers of all traversed nodes. The implementation involves recursively traversing each child node of the current node and inserting the subtree data of the child node into the vector containing the current node. The function first checks if the input node pointer is null, and if so, it defaults to traversing the entire tree. Finally, it returns a vector containing the data of all nodes.*
+
+*The depth-first traversal algorithm is recursive, it first visits the root node and then recursively traverses each subtree. After visiting each node, the recursive function backtracks to its parent node to continue traversing other subtrees.*
+
+## 示例 - Example
+
+```c++
+#include <tree.hpp>
+#include <string>
+#include <Arduino.h>
+
+void setup() {
+    Serial.begin(115200);
+    
+	Tree<std::string> tree("ROOT");
+    
+    tree.root->addChild("node_1")->addChild("node_1_1")->addChild("node_1_1_1");
+    tree.root->addChild("node_2")->addChild("node_2_1");
+    
+    // 以深度优先的方式遍历整颗树. 
+    // Traverse the entire tree in a depth-first style. 
+    auto tree_data = tree.traversalDFS();
+    
+    for (auto& data : tree_data) Serial.println(data.first.c_str());
+}
+```
+```c++
+ROOT
+|--node_1
+|  |--node_1_1
+|     |--node_1_1_1
+|--node_2
+   |--node_2_1
+```
+```c++
+Output:
+
+ROOT
+node_1
+node_1_1
+node_1_1_1
+node_2
+node_2_1
+```
+---
 # `T`
 
 
@@ -422,14 +682,11 @@ void setup() {
 	Tree<std::string> tree("ROOT");
 }
 ```
-```
+```c++
 
 ```
 
 ---
-
-
-
 
 
 
