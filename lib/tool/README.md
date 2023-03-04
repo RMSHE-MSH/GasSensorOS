@@ -408,7 +408,7 @@ TreeNode<T>* parent_node_ptr->bool deleteChild(const T& target_child_data);
 
 `target_node_data`
 
-指向父节点的孩子的指针, 表示要删除的孩子.<br/>*A pointer to a child of the parent node, indicating the child to be deleted.*
+这里需要提供待删除的目标子节点的值.<br/>*Here you need to provide the value of the target child node to be deleted.*
 
 ## 返回值 - Return value
 
@@ -595,6 +595,17 @@ std::vector<std::pair<T, TreeNode<T>*>> traversalDFS(TreeNode<T>* node_ptr = nul
 
 返回一个向量, 其中包含从指定节点开始子树的所有值和对应的指针.<br/>*Returns a vector containing all values and corresponding pointers for the subtree starting from the specified node.*
 
+```C++
+std::vector<std::pair<T, TreeNode<T>*>> returnValue = traversalDFS();
+
+// 使用迭代器遍历树中每个节点的值和指针.
+// Iterate over the values and pointers of each node in the tree using iterators.
+for (auto& data : tree_data) {
+    data.first;		// node_value;
+    data.second;	// node_ptr;
+}
+```
+
 ## 注解 - Remarks
 
 这段代码定义了一个以深度优先方式遍历树的函数`traversalDFS`，可以遍历整个树或从指定节点开始递归遍历其所有子节点，返回一个包含所有遍历节点数据值和对应指针的向量。具体实现是通过递归遍历当前节点的每个子节点，将子节点的子树数据插入到包含当前节点的向量中。函数首先判断传入的节点指针是否为空，为空则默认遍历整个树。最后返回包含所有节点数据的向量。
@@ -626,6 +637,8 @@ void setup() {
     // Traverse the entire tree in a depth-first style. 
     auto tree_data = tree.traversalDFS();
     
+    // 使用迭代器遍历并打印树中每个节点的值.
+    // Use an iterator to traverse and print the value of each node in the tree.
     for (auto& data : tree_data) Serial.println(data.first.c_str());
 }
 ```
@@ -647,6 +660,143 @@ node_1_1_1
 node_2
 node_2_1
 ```
+---
+# `traversalBFS`
+
+以广度优先的方式遍历树. <br/>*Traversing the tree in a breadth-first style.*
+
+
+```c++
+ std::vector<std::pair<T, TreeNode<T>*>> traversalBFS(TreeNode<T>* node_ptr = nullptr);
+```
+## 参数 - Parameters
+
+`node_ptr`
+
+提供一个节点指针，函数会以该节点为根节点递归遍历它所有的子嗣节点(若不传参则默认遍历整颗树).<br/>*Provide a node pointer, the function will use this node as the root node to recursively traverse all its descendant nodes (if no parameter is passed, the entire tree will be traversed by default).*
+
+## 返回值 - Return value
+
+返回一个向量, 其中包含从指定节点开始子树的所有值和对应的指针.<br/>*Returns a vector containing all values and corresponding pointers for the subtree starting from the specified node.*
+
+```C++
+std::vector<std::pair<T, TreeNode<T>*>> returnValue = traversalBFS();
+
+// 使用迭代器遍历树中每个节点的值和指针.
+// Iterate over the values and pointers of each node in the tree using iterators.
+for (auto& data : tree_data) {
+    data.first;		// node_value;
+    data.second;	// node_ptr;
+}
+```
+
+## 注解 - Remarks
+
+这个方法定义了一个广度优先搜索遍历树的函数 `traversalBFS`，它的输入参数是指向树节点的指针 `node_ptr`，默认为空，表示从根节点开始遍历。函数返回一个向量，向量中包含每个节点及其子节点的数据（类型为 `std::pair<T, TreeNode<T>*>`，其中 T 是节点存储的数据类型）。遍历是通过维护一个队列来完成的，从队列中取出一个节点，将其所有子节点插入队列中，并将该节点的数据及指针插入向量中，直到队列为空。如果输入的节点为空，则返回一个空向量。
+
+广度优先遍历算法是按层遍历，从根节点开始，先遍历根节点，然后按照从左到右的顺序遍历其子节点，再依次遍历下一层的所有节点。
+
+
+
+*This method defines a function `traversalBFS` that performs a breadth-first search traversal of a tree. Its input parameter is a pointer `node_ptr` that points to a tree node and defaults to `nullptr`, indicating that the traversal should start from the root node. The function returns a vector that contains the data of each node and its child nodes (of type `std::pair<T, TreeNode<T>*>`, where T is the data type stored in the node). The traversal is accomplished by maintaining a queue, extracting a node from the queue, inserting all its child nodes into the queue, and inserting the node's data and pointer into the vector until the queue is empty. If the input node is empty, an empty vector is returned.*
+
+*The breadth-first traversal algorithm traverses a tree layer by layer, starting from the root node. It first visits the root node, then visits its child nodes from left to right, and then visits all nodes in the next layer in sequence.*
+
+## 示例 - Example
+
+```c++
+#include <tree.hpp>
+#include <string>
+
+void setup() {
+	Serial.begin(115200);
+
+    Tree<std::string> tree("ROOT");
+
+    tree.root->addChild("node_1")->addChild("node_1_1")->addChild("node_1_1_1");
+    tree.root->addChild("node_2")->addChild("node_2_1");
+
+    // 以广度优先的方式遍历整颗树.
+    // Traverse the entire tree in a breadth-first style.
+    auto tree_data = tree.traversalBFS();
+
+    for (auto& data : tree_data) Serial.println(data.first.c_str());
+}
+```
+```c++
+ROOT
+|--node_1
+|  |--node_1_1
+|     |--node_1_1_1
+|--node_2
+   |--node_2_1
+```
+```c++
+Output:
+
+ROOT
+node_1
+node_2
+node_1_1
+node_2_1
+node_1_1_1
+```
+---
+# `findNode`
+
+在树中查找节点. <br/>*Find nodes in the tree.*
+
+
+```c++
+TreeNode<T>* findNode(const T& target_node_data);
+```
+## 参数 - Parameters
+
+`target_node_data`
+
+要查找的节点的值. (本方法会在树中查找该值, 如果找到就返回指向拥有该值的节点的指针).<br/>*The value of the node to look for. (This method looks for the value in the tree and returns a pointer to the node that has the value if it is found).*
+
+## 返回值 - Return value
+
+返回指向查找到的节点的指针，如果未找到则返回 `nullptr`.<br/>*Returns a pointer to the found node, or `nullptr` if it is not found.*
+
+## 注解 - Remarks
+
+本方法定义了一个查找目标节点的函数 `findNode`，它的输入参数是目标节点的值 `target_node_data`，返回类型是指向节点的指针 `TreeNode<T>*`。在函数中，首先调用根节点的 `findDescendant` 函数在根节点的子节点中查找目标节点，如果查找成功，则直接返回该节点的指针。如果查找失败，则通过比较根节点的数据和目标节点的数据来判断是否为根节点，如果是，则返回根节点的指针，否则返回空指针。
+
+该函数的实现是基于一个假设：在查找范围内（不包括根节点）只有一个节点具有目标数据。如果查找范围内有多个节点具有目标数据，则该函数只会返回其中一个节点的指针，而不是所有节点的指针。
+
+
+
+*This method defines a function `findNode` to search for a target node in a tree. The input parameter of this function is the value of the target node `target_node_data`, and the return type is a pointer to the node `TreeNode<T>*`. In the function, it first calls the `findDescendant` function of the root node to search for the target node in the children of the root node. If the search is successful, it directly returns the pointer to that node. If the search fails, it determines whether it is the root node by comparing the data of the root node and the data of the target node. If it is, it returns the pointer to the root node. Otherwise, it returns a null pointer.*
+
+*The implementation of this function is based on the assumption that only one node in the search range (excluding the root node) has the target data. If there are multiple nodes with the target data in the search range, the function will only return the pointer to one of them, not all of them.*
+
+## 示例 - Example
+
+```c++
+#include <tree.hpp>
+#include <string>
+
+void setup() {
+	Tree<std::string> tree("ROOT");
+    
+    tree.root->addChild("node_1")->addChild("node_1_1");
+    
+    // 在树中查找值为"node_1_1"的节点.
+    // Find the node with the value "node_1_1" in the tree.
+    auto node_1_1_ptr = tree.findNode("node_1_1");
+    
+    node_1_1_ptr->addChild("node_1_1_1");
+}
+```
+```c++
+ROOT
+|--node_1
+   |--node_1_1
+      |--node_1_1_1
+```
+
 ---
 # `T`
 
@@ -687,7 +837,6 @@ void setup() {
 ```
 
 ---
-
 
 
 

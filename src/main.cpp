@@ -32,6 +32,7 @@
 #include <code_interpreter.hpp>
 #include <tree.hpp>
 
+/*
 Interpreter inte;
 
 void setup() {
@@ -76,6 +77,24 @@ void setup() {
     for (auto& data : tree_data) Serial.println(data.first.c_str());
 
     // runKernelTasks();
+}
+*/
+
+void setup() {
+    Serial.begin(115200);
+
+    delay(3000);
+
+    Tree<std::string> tree("ROOT");
+
+    tree.root->addChild("node_1")->addChild("node_1_1")->addChild("node_1_1_1");
+    tree.root->addChild("node_2")->addChild("node_2_1");
+
+    // 以深度优先的方式遍历整颗树.
+    // Traverse the entire tree in a depth-first style.
+    auto tree_data = tree.traversalBFS();
+
+    for (auto& data : tree_data) Serial.println(data.first.c_str());
 }
 
 void loop() {
