@@ -798,6 +798,43 @@ ROOT
 ```
 
 ---
+# `hasChildren`
+
+判断指定节点是否有孩子. <br/>*Determine if the specified node has children.*
+
+
+```c++
+bool hasChildren(TreeNode<T>* node_ptr);
+```
+## 参数 - Parameters
+
+`node_ptr`
+
+提供一个节点指针，本方法会判断这个节点是否有孩子.<br>*Provide a node pointer and this method will determine if the node has children.*
+
+## 返回值 - Return value
+
+如果存在子节点返回`true`, 否则返回`false`.<br>*Returns true if a child node exists, otherwise returns false.*
+
+## 注解 - Remarks
+
+通过直接判断`node_ptr`指向的节点的`children`向量是否为空来确定是否存在孩子, 如果 `node_ptr->children` 不为空则表示这个节点有孩子.<br>*Determine if there are children by directly determining if the `children` vector of the node pointed to by `node_ptr` is empty, if `node_ptr->children` is not empty then the node has children.*
+
+## 示例 - Example
+
+```c++
+#include <tree.hpp>
+#include <string>
+
+void setup() {
+	Tree<std::string> tree("ROOT");
+}
+```
+```c++
+
+```
+
+---
 # `T`
 
 
@@ -837,6 +874,21 @@ void setup() {
 ```
 
 ---
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
