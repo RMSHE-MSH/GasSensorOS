@@ -707,6 +707,7 @@ for (auto& data : tree_data) {
 ```c++
 #include <tree.hpp>
 #include <string>
+#include <Arduino.h>
 
 void setup() {
 	Serial.begin(115200);
@@ -825,13 +826,33 @@ bool hasChildren(TreeNode<T>* node_ptr);
 ```c++
 #include <tree.hpp>
 #include <string>
+#include <Arduino.h>
 
 void setup() {
+    Serial.begin(115200);
+    
 	Tree<std::string> tree("ROOT");
+    
+    auto node_1_ptr = tree.root->addChild("node_1");
+    auto node_1_1_ptr = node_1_ptr->addChild("node_1_1");
+    
+    // 判断 node_1 节点是否有孩子;
+    // Determine if node_1 has children;
+    bool hasChildren_node_1 = tree.hasChildren(node_1_ptr);
+    
+    // 判断 node_1_1 节点是否有孩子;
+    // Determine if node_1_1 has children;
+    bool hasChildren_node_1_1 = tree.hasChildren(node_1_1_ptr);
+    
+    Serial.println(hasChildren_node_1);
+    Serial.println(hasChildren_node_1_1);
 }
 ```
 ```c++
+Output:
 
+1
+0
 ```
 
 ---
