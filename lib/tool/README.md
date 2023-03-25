@@ -79,7 +79,7 @@
 | getBreadth         | 获取树或树枝的叶子数量(叶子即没有子节点的节点，也称做终端节点) <br/>*Get the number of leaves of the tree or branch (leaves are nodes without children, also known as terminal nodes).* |
 | getWidth           | 获取树的宽度或指定节点所在层的宽度(宽度指一个层的节点数) <br/>*Get the width of the tree or the width of the specified node's layer (width refers to the number of nodes in a layer).* |
 | getLevel           | 获取指定节点的层级(一个节点的层级是它与根节点之间唯一路径上的边的数量, 根节点层级为零). <br/>*Get the layer of the specified node (the layer of a node is the number of edges on the unique path between it and the root node, the root node layer is zero).* |
-| getSize            | 获取树或树枝的大小(节点数). <br/>*Get the size of a tree or branch.* |
+| getSize            | 获取树或树枝的大小(节点总数). <br/>*Get the size of a tree or branch.* |
 | empty              | 判断树是否为空. <br/>*Determine if the tree is empty*        |
 | deleteNode         | 递归删除一个节点及其后裔. <br/>*Recursively delete a node and its descendants.* |
 | deleteTree         | 删除一颗树. <br/>*Delete a tree.*                            |
@@ -849,180 +849,644 @@ void setup() {
 }
 ```
 ```c++
+ROOT
+|--node_1
+|  |--node_1_1
+```
+```c++
 Output:
 
-1
-0
+true	// node_1 节点有孩子; node_1 has children;
+false	// node_1_1 节点没有孩子; node_1_1 no children;
 ```
 
 ---
-# `T`
+# `getDepth`
+
+递归地计算树的深度(高度)(默认统计整颗树的深度). <br/>*Recursively calculates the depth (height) of the tree (by default the depth of the whole tree is counted).*
 
 
 ```c++
-
+uint32_t getDepth(TreeNode<T>* node_ptr = nullptr);
 ```
 ## 参数 - Parameters
 
-`parent_node_ptr`
+`node_ptr`
 
-
-
-`target_node_data`
-
-
+提供一个节点指针，表示从该节点开始统计树枝的深度，若设为root则为统计整颗树的深度(这也是无传参时的默认设置).<br>*Provide a pointer to the node from which the depth of the branch is counted, or if set to root, the depth of the whole tree (this is also the default setting when no parameters are passed).*
 
 ## 返回值 - Return value
 
-
+返回指定树支的深度.<br/>*Returns the depth of the specified tree branch.*
 
 ## 注解 - Remarks
 
-
+这段代码的作用是计算一棵树的深度，返回以某个节点为根节点的子树的最大深度。如果没有传入节点指针，则默认以根节点为参数计算树的深度。函数首先检查传入的节点是否为叶子节点，如果是，则返回1作为高度。否则，对于当前节点的每个子节点，递归计算其子树的高度，并找到其中最大的高度。最后返回最大高度加上1，即为整个树的高度。函数的实现使用了C++标准库中的`std::max`函数，用于比较两个数的大小并返回较大的那个数。<br>*The purpose of this code is to calculate the depth of a tree and return the maximum depth of the subtree rooted at a given node. If no node pointer is passed, the function defaults to calculating the depth of the tree rooted at the root node. The function first checks if the passed node is a leaf node, and if so, returns 1 as the height. Otherwise, for each child node of the current node, it recursively calculates the height of its subtree and finds the maximum height. Finally, it returns the maximum height plus 1, which is the height of the entire tree. The implementation of the function uses the `std::max` function from the C++ standard library to compare two numbers and return the larger one.*
 
 ## 示例 - Example
 
 ```c++
 #include <tree.hpp>
 #include <string>
+#include <Arduino.h>
 
 void setup() {
-	Tree<std::string> tree("ROOT");
+	Serial.begin(115200);
+
+    Tree<std::string> tree("ROOT");
+
+    tree.root->addChild("node_1")->addChild("node_1_1")->addChild("node_1_1_1");
+    tree.root->addChild("node_2")->addChild("node_2_1");
+    
+    // 获取整颗树的深度.
+    // Get the depth of the whole tree.
+    uint32_t root_depth = tree.getDepth();
+    
+    // 获取以 node_2 为根节点的树枝的深度.
+    // Get the depth of the tree branch with node_2 as the root node.
+    uint32_t node_2_depth = tree.getDepth(tree.findNode("node_2"));
+    
+    Serial.println(root_depth);
+    Serial.println(node_2_depth);
 }
 ```
 ```c++
-
+ROOT
+|--node_1
+|  |--node_1_1
+|     |--node_1_1_1
+|--node_2
+   |--node_2_1
 ```
+```c++
+Output:
 
+4	// 整颗树的深度; The depth of the whole tree;
+2	// 以 node_2 为根节点的树枝的深度; The depth of the tree branch with node_2 as the root node;
+```
 ---
+# `getDegree`
+
+获取节点的度(对于一个给定的节点，其子节点的数量称为度. 一个叶子的度数一定是零) <br/>*Get the degree of a node (for a given node, the number of its children is called the degree. The degree of a leaf must be zero)*
 
 
+```c++
+uint32_t getDegree(TreeNode<T>* node_ptr = nullptr);
+```
+## 参数 - Parameters
 
+`node_ptr`
 
+提供一个节点指针，本方法会获取该节点的度(无传参时默认获取根节点的度).<br>*Provide a node pointer, this method will get the degree of the node (default get the degree of the root node when no parameters are passed).*
 
+## 返回值 - Return value
 
+返回目标节点的度.<br>*Returns the degree of the target node.*
 
+## 注解 - Remarks
 
+这段代码的作用是计算一棵树的某个节点的度数，即返回以该节点为根节点的子树中子节点的数量。如果没有传入节点指针，则默认以根节点为参数计算该节点的度数。函数直接返回目标节点的子节点数量。<br>*The purpose of this code is to calculate the degree of a node of a tree, i.e., to return the number of children in the subtree with that node as the root. If no node pointer is passed in, the degree of the node is calculated by default with the root node as the argument. The function directly returns the number of children of the target node.*
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# 简单示例 - Simple example
-
-## 1. 如何实例化类? - How to instantiate a class?
+## 示例 - Example
 
 ```c++
 #include <tree.hpp>
 #include <string>
+#include <Arduino.h>
 
-// 实例化一颗树, 创建树的根节点. 
-// Instantiate a tree, create the root node of the tree.
-Tree<std::string> tree("ROOT");
+void setup() {
+	Serial.begin(115200);
+
+    Tree<std::string> tree("ROOT");
+
+    tree.root->addChild("node_1")->addChild("node_1_1")->addChild("node_1_1_1");
+    tree.root->addChild("node_2")->addChild("node_2_1");
+    
+    // 获取根节点的度.
+    // Get the degree of the root node.
+    uint32_t root_degree = tree.getDegree();
+    
+    // 获取 node_2 的度.
+    // Get the degree of node_2.
+    uint32_t node_2_degree = tree.getDegree(tree.findNode("node_2"));
+    
+    Serial.println(root_degree);
+    Serial.println(node_2_degree);
+}
 ```
+```c++
+ROOT
+|--node_1
+|  |--node_1_1
+|     |--node_1_1_1
+|--node_2
+   |--node_2_1
+```
+```c++
+Output:
 
-在上面的示例中, 我们实例化了一个数据类型为`std::string`名为`tree`的树容器, 并且将根节点的值设置为`"root"`.
+2	// 根节点的度; The degree of the root node;
+1	// node_2 的度; The degree of node_2;
+```
+---
+# `get_degree_of_tree`
 
-### 备注:
+获取树的度(树的度是指树中一个节点的最大度, 即树中某个拥有最多子节点的父节点的子节点数) <br/>*Get the degree of the tree (the degree of the tree is the maximum degree of a node in the tree, i.e., the number of children of a parent node that has the most children in the tree).*
 
-- `std::string`可以是C++STL中的任意数据类型.
-- `tree`是我们实例化的树的名称.
-- `“ROOT”`是树根节点的值(数据类型是`std::string`).
-
-
-
-*In the above example, we instantiate a tree container of data type `std::string` named `tree` and set the content of the root node to `"ROOT"`.*
-
-### *note:*
-
-- *`std::string` can be any data type in C++STL.*
-- *`tree` is the name of the tree we instantiate*.
-- *`"ROOT"` is the value of the root node of the tree (data type is `std::string`).*
-
-## 2.  如何添加子节点? - How to add child nodes?
-
-
-在实例化树容器后我们就可以向它添加节点. 添加节点的方式有多种, 但是均离不开两个参数, 一是指向父节点的指针`parent_node_ptr`, 二是待添加节点的值`data`. 具体的实现有两种:
-
-
-
-*After instantiating the tree container, we can add nodes to it. There are various ways to add a node, but they all depend on two parameters, a pointer to the parent node `parent_node_ptr`, and the value of the node to be added `data`. There are two specific implementations:*
-
-### 1. class TreeNode
 
 ```c++
-TreeNode<T>* parent_node_ptr->TreeNode<T>* addChild(const T& data);
+uint32_t get_degree_of_tree();
 ```
+## 返回值 - Return value
 
-当调用 `addChild()` 函数时，它将创建一个新的 `TreeNode` 对象，该对象保存传递给函数的数据，并将指向新创建节点的指针添加到当前节点的 `children` 向量中。也就是说`addChild()` 做的工作是向当前节点添加一个子节点, 而指定父节点的任务由 `parent_node_ptr` 完成.
+返回树的度.<br>*Returns the degree of the tree.*
 
+## 注解 - Remarks
 
+本方法的作用是计算一棵树中所有节点的度数，并返回其中最大的度数。函数使用深度优先遍历遍历树的所有节点，并获取每个节点的子节点个数。遍历过程中，记录当前遍历到的最大度数，最后返回树中所有节点的度数的最大值。<br>*The purpose of this method is to calculate the degrees of all nodes in a tree and return the maximum degree. The function uses depth-first traversal to traverse all the nodes of the tree and get the number of child nodes for each node. During the traversal process, the current maximum degree is recorded, and finally the maximum value of the degrees of all nodes in the tree is returned.*
 
-*When the `addChild()` function is called, it creates a new `TreeNode` object, which holds the data passed to the function and adds a pointer to the newly created node to the `children` vector of the current node. This means that what `addChild()` does is add a child node to the current node, while the task of specifying the parent node is done by `parent_node_ptr`.*
+## 示例 - Example
 
-#### 示例代码 - Sample Code
-
-```C++
+```c++
 #include <tree.hpp>
 #include <string>
+#include <Arduino.h>
+
+void setup() {
+	Serial.begin(115200);
+
+    Tree<std::string> tree("ROOT");
+
+    tree.root->addChild("node_1")->addChild("node_1_1")->addChild("node_1_1_1");
+    tree.root->addChild("node_2")->addChild("node_2_1");
+    
+    // 获取树的度.
+    // Get the degree of the tree.
+    uint32_t tree_degree = tree.get_degree_of_tree();
+    
+    Serial.println(tree_degree);
+}
+```
+```c++
+ROOT
+|--node_1
+|  |--node_1_1
+|     |--node_1_1_1
+|--node_2
+   |--node_2_1
+```
+```c++
+Output:
+
+2	// 整颗树中根节点拥有最多的子节点, 因此树的度等于根节点的度; The root node has the most children in the whole tree, so the degree of the tree is equal to the degree of the root node.;
+```
+---
+# `getBreadth`
+
+获取树或树枝的叶子数量(叶子即没有子节点的节点，也称做终端节点) <br/>*Get the number of leaves of the tree or branch (leaves are nodes without children, also known as terminal nodes).*
+
+
+```c++
+uint32_t getBreadth(TreeNode<T>* node_ptr = nullptr);
+```
+## 参数 - Parameters
+
+`node_ptr`
+
+提供一个节点指针，本方法会获取以该节点为根节点的树枝的叶子数量(无传参时默认获取整颗树的叶子数量).<br>*Provide a node pointer, this method will get the number of leaves of the tree branch with this node as the root node (the default is to get the number of leaves of the whole tree when no parameters are passed).*
+
+## 返回值 - Return value
+
+返回树或指定树枝的叶子数量.<br>*Returns the number of leaves of a tree or a specified branch.*
+
+## 注解 - Remarks
+
+该函数的作用是计算以某个节点为根节点的子树中的叶子节点数量。如果没有传入节点指针，则默认以根节点为参数计算叶子节点数量。函数首先将叶子节点数量初始化为0，然后对子树进行深度优先遍历。在遍历过程中，如果当前遍历到的节点没有子节点，则增加叶子数。最后返回子树中叶子节点的数量。<br>*The function is used to calculate the number of leaf nodes in the subtree rooted at a given node. If no node pointer is passed, the number of leaf nodes under the root node is calculated by default. The function first initializes the number of leaf nodes to 0, and then performs a depth-first traversal of the subtree. During the traversal, if the current node being visited has no children, the number of leaves is incremented. Finally, the function returns the number of leaf nodes in the subtree.*
+
+## 示例 - Example
+
+```c++
+#include <tree.hpp>
+#include <string>
+#include <Arduino.h>
+
+void setup() {
+	Serial.begin(115200);
+
+    Tree<std::string> tree("ROOT");
+
+    tree.root->addChild("node_1")->addChild("node_1_1")->addChild("node_1_1_1");
+    tree.root->addChild("node_2")->addChild("node_2_1");
+    
+    // 获取整颗树的叶子数量;
+    // Get the number of leaves of the whole tree.
+    uint32_t tree_breadth = tree.getBreadth();
+    
+    // 获取 node_1 节点的叶子数量;
+    // Get the number of leaves of node_1.
+    uint32_t node_1_breadth = tree.getBreadth(tree.findNode("node_1"));
+    
+    Serial.println(tree_breadth);
+    Serial.println(node_1_breadth);
+}
+```
+```c++
+ROOT
+|--node_1
+|  |--node_1_1
+|     |--node_1_1_1
+|--node_2
+   |--node_2_1
+```
+```c++
+Output:
+
+2	// tree_breadth;
+1	// node_1_breadth;
+```
+---
+# `getWidth`
+
+获取树的宽度或指定节点所在层的宽度(宽度指一个层的节点数) <br/>*Get the width of the tree or the width of the specified node's layer (width refers to the number of nodes in a layer).*
+
+
+```c++
+uint32_t getWidth(TreeNode<T>* node_ptr = nullptr);
+```
+## 参数 - Parameters
+
+`node_ptr`
+
+提供一个节点指针，表示获取该节点所在层的宽度，无传参时默认获取整个树的宽度(拥有最大宽度的层级).<br>*Provide a node pointer to get the width of the layer in which the node is located, and by default get the width of the whole tree (the layer with the maximum width) when no parameters are passed.*
+
+## 返回值 - Return value
+
+无参数时返回树的宽度，有参数时返回目标节点所在层的宽度.<br>*Returns the width of the tree with no arguments and the width of the target node's layer with arguments.*
+
+## 注解 - Remarks
+
+该函数的作用是计算以某个节点为根节点的子树的宽度。如果没有传入节点指针，则默认以根节点为参数计算子树的宽度。函数首先使用广度优先搜索遍历每个节点，并记录每个层级的节点数，同时找到宽度最大的层级。最后，如果传入的指针是根节点指针或空指针，则返回整棵树的宽度，否则返回该节点所在层级的节点数。<br>*The purpose of this function is to calculate the width of a subtree rooted at a specific node. If no node pointer is passed in, the function will default to calculating the width of the subtree rooted at the root node. The function first traverses every node using breadth-first search and records the number of nodes at each level while finding the level with the maximum width. Finally, if the passed-in pointer is the root node pointer or a null pointer, it returns the width of the entire tree; otherwise, it returns the number of nodes at the level where the passed-in node resides.*
+
+## 示例 - Example
+
+```c++
+#include <tree.hpp>
+#include <string>
+#include <Arduino.h>
+
+void setup() {
+	Serial.begin(115200);
+
+    Tree<std::string> tree("ROOT");
+
+    tree.root->addChild("node_1")->addChild("node_1_1")->addChild("node_1_1_1");
+    tree.root->addChild("node_2")->addChild("node_2_1");
+    
+    // 获取整颗树的宽度;
+    // Get the width of the whole tree.
+    uint32_t tree_width = tree.getWidth();
+    
+    // 获取 node_1 节点的宽度;
+    // Get the width of the node_1 node.
+    uint32_t node_1_width = tree.getWidth(tree.findNode("node_1"));
+    
+    Serial.println(tree_width);
+    Serial.println(node_1_width);
+}
+```
+```c++
+ROOT
+|--node_1
+|  |--node_1_1
+|     |--node_1_1_1
+|--node_2
+   |--node_2_1
+```
+```c++
+Output:
+
+2	// tree_width;
+1	// node_1_width;
+```
+---
+# `getLevel`
+
+获取指定节点的层级(一个节点的层级是它与根节点之间唯一路径上的边的数量, 根节点层级为零). <br/>*Get the layer of the specified node (the layer of a node is the number of edges on the unique path between it and the root node, the root node layer is zero).*
+
+
+```c++
+int32_t getLevel(TreeNode<T>* node_ptr);
+```
+## 参数 - Parameters
+
+`node_ptr`
+
+提供一个节点指针，表示获取该节点的层级.<br>*Provide a node pointer indicating the level at which to get the node.*
+
+## 返回值 - Return value
+
+返回指定节点的所在层级数, 如果提供的节点指针为空指针则返回`-1`.<br>*Returns the number of levels of the specified node, or `-1` if the supplied node pointer is a null pointer.*
+
+## 注解 - Remarks
+
+该函数的作用是计算给定节点在树中所处的层级。函数首先检查给定的节点指针是否为空，如果为空，则返回-1。然后，使用循环从给定节点向其父节点逐层查找，每找到一个父节点，就将节点的层级加1。直到查找到根节点，即节点的父节点为空为止。最后返回节点的层级。<br>*The purpose of this function is to calculate the level of a given node in a tree. The function first checks if the given node pointer is null, and if so, it returns -1. Then, it uses a loop to traverse up the tree from the given node to its parent node at each iteration and increment the node's level by 1. The loop continues until the root node is reached, which has no parent. Finally, the function returns the level of the node.*
+
+## 示例 - Example
+
+```c++
+#include <tree.hpp>
+#include <string>
+#include <Arduino.h>
+
+void setup() {
+	Serial.begin(115200);
+
+    Tree<std::string> tree("ROOT");
+
+    tree.root->addChild("node_1")->addChild("node_1_1")->addChild("node_1_1_1");
+    tree.root->addChild("node_2")->addChild("node_2_1");
+    
+    // 获取 node_2 的层级.
+    // Get the level of node_2.
+    int32_t node_2_level = tree.getLevel(tree.findNode("node_2"));
+    
+    // 获取 node_1_1_1 的层级.
+    // Get the level of node_1_1_1.
+    int32_t node_1_1_1_level = tree.getLevel(tree.findNode("node_1_1_1"));
+    
+    Serial.println(node_2_level);
+    Serial.println(node_1_1_1_level);
+}
+```
+```c++
+ROOT
+|--node_1
+|  |--node_1_1
+|     |--node_1_1_1
+|--node_2
+   |--node_2_1
+```
+```c++
+Output:
+
+1	// node_2_level;
+3	// node_1_1_1_level;
+```
+---
+# `getSize`
+
+获取树或树枝的大小(节点总数). <br/>*Get the size of a tree or branch.*
+
+
+```c++
+uint32_t getSize(TreeNode<T>* node_ptr = nullptr)
+```
+## 参数 - Parameters
+
+`node_ptr`
+
+提供一个节点指针，表示获取以该节点为起点的树枝的节点总数，无传参时默认获取整个树的节点总数.<br>*Provide a node pointer to get the total number of nodes in the branch starting from this node, or get the total number of nodes in the whole tree by default if no parameters are passed.*
+
+## 返回值 - Return value
+
+返回树或指定树枝的节点总数(包含根节点在内).<br>*Returns the total number of nodes in the tree or the specified branch.(including the root node)*
+
+## 注解 - Remarks
+
+该函数的作用是计算以给定节点为根的子树中的节点总数。如果没有传入节点指针，则默认以根节点为参数计算子树的大小。函数首先检查传入的节点指针是否为空，如果为空，则将其设置为根节点。然后对以该节点为根的子树进行深度优先遍历，最后返回遍历得到的节点数。<br>*The function aims to calculate the total number of nodes in the subtree rooted at a given node. If no node pointer is passed, it defaults to calculating the size of the subtree rooted at the root node. The function first checks if the given node pointer is null, and if so, sets it to the root node. Then it performs a depth-first traversal of the subtree rooted at that node, and finally returns the number of nodes obtained during the traversal.*
+
+## 示例 - Example
+
+```c++
+#include <tree.hpp>
+#include <string>
+#include <Arduino.h>
+
+void setup() {
+	Serial.begin(115200);
+
+    Tree<std::string> tree("ROOT");
+
+    tree.root->addChild("node_1")->addChild("node_1_1")->addChild("node_1_1_1");
+    tree.root->addChild("node_2")->addChild("node_2_1");
+    
+    // 获取整颗数就节点总数;
+    // Get the whole number of nodes.
+    uint32_t root_Branch_size = tree.getSize();
+    
+	// 获取以 node_1 节点五根节点的树枝的节点总数;
+    // Get the total number of nodes in the tree branch with five nodes at node_1.
+    uint32_t node_1_Branch_size = tree.getSize(tree.findNode("node_1"));
+    
+    Serial.println(root_Branch_size);
+    Serial.println(node_1_Branch_size);
+}
+```
+```c++
+ROOT
+|--node_1
+|  |--node_1_1
+|     |--node_1_1_1
+|--node_2
+   |--node_2_1
+```
+```c++
+Output:
+
+6	// root_Branch_size;
+3	// node_1_Branch_size;
+```
+---
+# `empty`
+
+判断树是否为空. <br/>*Determine if the tree is empty*
+
+
+```c++
+ bool empty();
+```
+## 返回值 - Return value
+
+如果树为空，返回 `true`, 否则返回 `false`.<br>*If the tree is empty, return `true`, otherwise return `false`.*
+
+## 注解 - Remarks
+
+该函数的作用是判断树是否为空。如果根节点指针为空，则返回 `true`，否则返回 `false`。<br>*This function is used to determine if the tree is empty. If the root pointer is empty, it returns `true`, otherwise it returns `false`.*
+
+## 示例 - Example
+
+```c++
+#include <tree.hpp>
+#include <string>
+#include <Arduino.h>
 
 void setup() {
 	Tree<std::string> tree("ROOT");
-    /**
-    * 向根节点添加一个子节点, 子节点的值为"node_1".
-    */
-    tree.root->addChild("node_1");
+    
+    tree.root->addChild("node_1")->addChild("node_1_1");
+    
+    // 判断树是否为空;
+    // Determine if the tree is empty.
+    bool is_empty_1 = tree.empty();
+    
+    // 删除整颗树;
+    // Delete the whole tree.
+    tree.deleteTree();
+    
+    // 判断树是否为空;
+    // Determine if the tree is empty.
+    bool is_empty_2 = tree.empty();
+    
+    Serial.println(is_empty_1);
+    Serial.println(is_empty_2);
 }
 ```
+```c++
+ROOT
+|--node_1
+|  |--node_1_1
+```
+```c++
+Output:
 
+false
+true
+```
+---
+# `deleteNode`
 
+递归删除一个节点及其后裔. <br/>*Recursively delete a node and its descendants.*
 
-### 2. class Tree
 
 ```c++
-TreeNode<T>* addNode(TreeNode<T>* node_ptr, const T& data);
+bool deleteNode(TreeNode<T>* node_ptr);
 ```
+## 参数 - Parameters
+
+`node_ptr`
+
+提供一个指向待删除节点的指针.<br>*Provide a pointer to the node to be deleted.*
+
+## 返回值 - Return value
+
+删除成功返回`true`，否则返回`false`.<br>*Returns `true` for successful deletion, otherwise returns `false`.*
+
+## 注解 - Remarks
+
+这段代码的作用是删除给定节点及其所有子节点。首先检查节点指针是否为空，如果为空则直接返回。然后遍历该节点的所有子节点，递归调用 `deleteNode` 函数来删除子节点。如果子节点是树叶节点，则将其从父节点的子节点列表中移除。最后检查当前节点是否为根节点，如果是，则返回 `false`，因为无法删除根节点。如果当前节点不是根节点，则将其从父节点的子节点列表中移除，并返回 `true`。<br>*The purpose of this code is to delete a given node and all its child nodes. It first checks if the node pointer is null, and if so, returns directly. Then it traverses all child nodes of the node and recursively calls the deleteNode function to delete them. If a child node is a leaf node, it is removed from the parent node's list of child nodes. Finally, it checks if the current node is the root node, and if so, returns false because it is not possible to delete the root node. If the current node is not the root node, it is removed from the parent node's list of child nodes, and true is returned.*
+
+## 示例 - Example
+
+```c++
+#include <tree.hpp>
+#include <string>
+#include <Arduino.h>
+
+void setup() {
+	Serial.begin(115200);
+
+    Tree<std::string> tree("ROOT");
+
+    tree.root->addChild("node_1")->addChild("node_1_1")->addChild("node_1_1_1");
+    tree.root->addChild("node_2")->addChild("node_2_1");
+    
+    for (auto& data : tree.traversalDFS()) Serial.println(data.first.c_str());
+    
+    // 删除 node_2_1 节点及其所有后裔.
+    // Delete node_2_1 and all its descendants.
+    bool delete_result_1 = tree.deleteNode(tree.findNode("node_2_1"));
+    Serial.println(delete_result_1);
+    
+    for (auto& data : tree.traversalDFS()) Serial.println(data.first.c_str());
+    
+    // 删除 node_1 节点及其所有后裔.
+    // Delete node_1 and all its descendants.
+    bool delete_result_2 = tree.deleteNode(tree.findNode("node_1"));
+    Serial.println(delete_result_2);
+    
+    for (auto& data : tree.traversalDFS()) Serial.println(data.first.c_str());
+}
+```
+```c++
+ROOT
+|--node_1
+|  |--node_1_1
+|     |--node_1_1_1
+|--node_2
+   |--node_2_1
+```
+```c++
+Output:
+
+ROOT
+node_1
+node_1_1
+node_1_1_1
+node_2
+node_2_1
+true	// Delete node_2_1;
+ROOT
+node_1
+node_1_1
+node_1_1_1
+node_2
+true	// Delete node_1;
+ROOT
+node_2
+```
+---
+# `deleteTree`
+
+删除一颗树. <br/>*Delete a tree.*
 
 
+```c++
+void deleteTree();
+```
+## 注解 - Remarks
 
+这段代码的作用是删除整棵树。它首先使用`deleteNode`函数删除根节点的所有子节点，然后使用`reset`函数将根节点指针重置为`nullptr`。<br>*The purpose of this code is to delete the entire tree. It first uses the `deleteNode` function to remove all child nodes of the root node, and then uses the `reset` function to reset the root node pointer to `nullptr`.*
 
+## 示例 - Example
 
+```c++
+#include <tree.hpp>
+#include <string>
+#include <Arduino.h>
 
+void setup() {
+	Tree<std::string> tree("ROOT");
+    
+    tree.root->addChild("node_1")->addChild("node_1_1");
+    
+    // 判断树是否为空;
+    // Determine if the tree is empty.
+    bool is_empty_1 = tree.empty();
+    
+    // 删除整颗树;
+    // Delete the whole tree.
+    tree.deleteTree();
+    
+    // 判断树是否为空;
+    // Determine if the tree is empty.
+    bool is_empty_2 = tree.empty();
+    
+    Serial.println(is_empty_1);
+    Serial.println(is_empty_2);
+}
+```
+```c++
+ROOT
+|--node_1
+|  |--node_1_1
+```
+```c++
+Output:
 
+false
+true
+```
+---
+# 结尾 - End
+
+> Powered by RMSHE. Copyrght(C) 2023 RMSHE. All rights reserved.

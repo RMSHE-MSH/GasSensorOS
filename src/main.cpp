@@ -90,11 +90,23 @@ void setup() {
     tree.root->addChild("node_1")->addChild("node_1_1")->addChild("node_1_1_1");
     tree.root->addChild("node_2")->addChild("node_2_1");
 
-    // 以深度优先的方式遍历整颗树.
-    // Traverse the entire tree in a depth-first style.
-    auto tree_data = tree.traversalBFS();
+    // 使用迭代器遍历并打印树中每个节点的值.
+    // Use an iterator to traverse and print the value of each node in the tree.
+    for (auto& data : tree.traversalDFS()) Serial.println(data.first.c_str());
 
-    for (auto& data : tree_data) Serial.println(data.first.c_str());
+    // 删除 node_2_1 节点及其所有后裔.
+    // Delete node_2_1 and all its descendants.
+    bool delete_result_1 = tree.deleteNode(tree.findNode("node_2_1"));
+    Serial.println(delete_result_1);
+
+    for (auto& data : tree.traversalDFS()) Serial.println(data.first.c_str());
+
+    // 删除 node_1 节点及其所有后裔.
+    // Delete node_1 and all its descendants.
+    bool delete_result_2 = tree.deleteNode(tree.findNode("node_1"));
+    Serial.println(delete_result_2);
+
+    for (auto& data : tree.traversalDFS()) Serial.println(data.first.c_str());
 }
 
 void loop() {
