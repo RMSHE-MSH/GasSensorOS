@@ -29,6 +29,8 @@
 #include <random.h>
 #include <systime.h>
 
+#include <random>
+
 // #include <code_interpreter.hpp>
 #include <fourier_transform.hpp>
 #include <tree.hpp>
@@ -87,28 +89,34 @@ void setup() { Serial.begin(115200); }
 
 void loop() {
     // inte.interpreter(code);
-    delay(2000);
 
     // 生成时域波形
-    uint16_t N = 1000;
+    uint32_t N = 8192;
     float dt = 0.01;
     float df = 1.0 / (N * dt);
 
     std::vector<float> input(N);
 
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_real_distribution<> dis(-1.8, 1.8);
+
     for (int i = 0; i < N; ++i) {
-        input[i] = sin((10 * 2 * PI) * i * dt) + sin((20 * 2 * PI) * i * dt) + sin((30 * 2 * PI) * i * dt);
+        input[i] = sin((10 * 2 * PI) * i * dt) + sin((20 * 2 * PI) * i * dt) + sin((30 * 2 * PI) * i * dt) + dis(gen);
     }
 
     std::vector<std::complex<float>> output = fft.FFT(input);
 
-    for (int i = 0; i < N / 2; ++i) {
+    for (int i = 0; i < N; ++i) {
         float freq = i * df;
         float fft = abs(output[i]);
 
+        Serial.print(input[i]);
+        Serial.print(" ");
         Serial.print(freq);
-        Serial.print(", ");
-        Serial.println(fft);
+        Serial.print(" ");
+        Serial.print(fft);
+        Serial.println();
     }
 }
 
