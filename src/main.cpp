@@ -83,37 +83,33 @@ void setup() {
 
 FastFourierTransform fft;
 
-void setup() {
-    Serial.begin(115200);
+void setup() { Serial.begin(115200); }
 
-    delay(3000);
+void loop() {
+    // inte.interpreter(code);
+    delay(2000);
 
     // 生成时域波形
-    double N = 1000;
-    double dt = 0.01;
-    double df = 1.0 / (N * dt);
+    uint16_t N = 1000;
+    float dt = 0.01;
+    float df = 1.0 / (N * dt);
 
-    std::vector<double> input(N);
+    std::vector<float> input(N);
 
     for (int i = 0; i < N; ++i) {
         input[i] = sin((10 * 2 * PI) * i * dt) + sin((20 * 2 * PI) * i * dt) + sin((30 * 2 * PI) * i * dt);
     }
 
-    std::vector<std::complex<double>> output = fft.FFT(input);
+    std::vector<std::complex<float>> output = fft.FFT(input);
 
     for (int i = 0; i < N / 2; ++i) {
-        double freq = i * df;
-        double fft = abs(output[i]);
+        float freq = i * df;
+        float fft = abs(output[i]);
 
         Serial.print(freq);
         Serial.print(", ");
         Serial.println(fft);
     }
-}
-
-void loop() {
-    // inte.interpreter(code);
-    delay(2000);
 }
 
 // git config --global --unset http.proxy
