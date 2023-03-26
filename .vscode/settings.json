@@ -55,7 +55,8 @@
         "bitset": "cpp",
         "iostream": "cpp",
         "regex": "cpp",
-        "random": "cpp"
+        "random": "cpp",
+        "complex": "cpp"
     },
     "C_Cpp.default.cppStandard": ""
 }

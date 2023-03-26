@@ -29,7 +29,8 @@
 #include <random.h>
 #include <systime.h>
 
-#include <code_interpreter.hpp>
+// #include <code_interpreter.hpp>
+#include <fourier_transform.hpp>
 #include <tree.hpp>
 
 /*
@@ -80,33 +81,34 @@ void setup() {
 }
 */
 
+FastFourierTransform fft;
+
 void setup() {
     Serial.begin(115200);
 
     delay(3000);
 
-    Tree<std::string> tree("ROOT");
+    // 生成时域波形
+    double N = 1000;
+    double dt = 0.01;
+    double df = 1.0 / (N * dt);
 
-    tree.root->addChild("node_1")->addChild("node_1_1")->addChild("node_1_1_1");
-    tree.root->addChild("node_2")->addChild("node_2_1");
+    std::vector<double> input(N);
 
-    // 使用迭代器遍历并打印树中每个节点的值.
-    // Use an iterator to traverse and print the value of each node in the tree.
-    for (auto& data : tree.traversalDFS()) Serial.println(data.first.c_str());
+    for (int i = 0; i < N; ++i) {
+        input[i] = sin((10 * 2 * PI) * i * dt) + sin((20 * 2 * PI) * i * dt) + sin((30 * 2 * PI) * i * dt);
+    }
 
-    // 删除 node_2_1 节点及其所有后裔.
-    // Delete node_2_1 and all its descendants.
-    bool delete_result_1 = tree.deleteNode(tree.findNode("node_2_1"));
-    Serial.println(delete_result_1);
+    std::vector<std::complex<double>> output = fft.FFT(input);
 
-    for (auto& data : tree.traversalDFS()) Serial.println(data.first.c_str());
+    for (int i = 0; i < N / 2; ++i) {
+        double freq = i * df;
+        double fft = abs(output[i]);
 
-    // 删除 node_1 节点及其所有后裔.
-    // Delete node_1 and all its descendants.
-    bool delete_result_2 = tree.deleteNode(tree.findNode("node_1"));
-    Serial.println(delete_result_2);
-
-    for (auto& data : tree.traversalDFS()) Serial.println(data.first.c_str());
+        Serial.print(freq);
+        Serial.print(", ");
+        Serial.println(fft);
+    }
 }
 
 void loop() {
