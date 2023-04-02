@@ -84,28 +84,35 @@ void setup() {
 */
 
 FastFourierTransform fft;
+DiscreteFourierTransform dft;
 
-void setup() { Serial.begin(115200); }
+// 生成时域波形
+uint32_t N = 1024;
+float dt = 0.01;
+float df = 1.0 / (N * dt);
 
-void loop() {
-    // inte.interpreter(code);
+std::vector<float> input(N);
+std::vector<std::complex<float>> output;
 
-    // 生成时域波形
-    uint32_t N = 8192;
-    float dt = 0.01;
-    float df = 1.0 / (N * dt);
-
-    std::vector<float> input(N);
+void setup() {
+    Serial.begin(115200);
 
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_real_distribution<> dis(-1.8, 1.8);
 
     for (int i = 0; i < N; ++i) {
-        input[i] = sin((10 * 2 * PI) * i * dt) + sin((20 * 2 * PI) * i * dt) + sin((30 * 2 * PI) * i * dt) + dis(gen);
+        for (float j = 0; j < 16; j += 0.1) {
+            input[i] = input[i] + sin((j * 2 * PI) * i * dt);
+        }
+        // input[i] = sin((10 * 2 * PI) * i * dt) + sin((20 * 2 * PI) * i * dt) + sin((30 * 2 * PI) * i * dt) + dis(gen);
     }
 
-    std::vector<std::complex<float>> output = fft.FFT(input);
+    output = dft.DFT(input);
+}
+
+void loop() {
+    // inte.interpreter(code);
 
     for (int i = 0; i < N; ++i) {
         float freq = i * df;

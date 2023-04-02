@@ -82,3 +82,48 @@ class FastFourierTransform {
         }
     }
 };
+
+class DiscreteFourierTransform {
+   public:
+    std::vector<std::complex<float>> DFT(std::vector<float> input_sequence, bool inverse = false) {
+        // 这里将实数域转为复数域;
+        std::vector<std::complex<float>> data(input_sequence.begin(), input_sequence.end());
+
+        // 若反转为 false 则进行DFT正变换, 若反转为 true 则进行DFT逆变换;
+        if (inverse == false)
+            return discrete_fourier_transform(data);
+        else
+            return inverse_discrete_fourier_transform(data);
+    }
+
+   private:
+    // 计算离散傅里叶变换
+    std::vector<std::complex<float>> discrete_fourier_transform(const std::vector<std::complex<float>> &input_vector) const {
+        uint32_t N = input_vector.size();
+        std::vector<std::complex<float>> output_vector(N);
+        for (uint32_t k = 0; k < N; k++) {
+            // 对于每个频率 k，计算对应的和
+            for (uint32_t n = 0; n < N; n++) {
+                // 对于每个样本 n，计算频率为 k 的分量
+                output_vector[k] += input_vector[n] * std::exp(std::complex<float>(0, -2 * M_PI * k * n / N));
+            }
+        }
+        return output_vector;
+    }
+
+    // 计算离散傅里叶逆变换
+    std::vector<std::complex<float>> inverse_discrete_fourier_transform(const std::vector<std::complex<float>> &input_vector) const {
+        uint32_t N = input_vector.size();
+        std::vector<std::complex<float>> output_vector(N);
+        for (uint32_t n = 0; n < N; n++) {
+            // 对于每个样本 n，计算对应的和
+            for (uint32_t k = 0; k < N; k++) {
+                // 对于每个频率 k，计算样本为 n 的分量
+                output_vector[n] += input_vector[k] * std::exp(std::complex<float>(0, 2 * M_PI * k * n / N));
+            }
+            // 对和进行缩放，得到正确的输出
+            output_vector[n] /= N;
+        }
+        return output_vector;
+    }
+};
