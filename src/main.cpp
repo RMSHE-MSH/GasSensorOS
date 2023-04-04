@@ -33,6 +33,7 @@
 
 // #include <code_interpreter.hpp>
 #include <fourier_transform.hpp>
+#include <rivest_cipher_4.hpp>
 #include <tree.hpp>
 
 /*
@@ -108,12 +109,13 @@ void setup() {
         // input[i] = sin((10 * 2 * PI) * i * dt) + sin((20 * 2 * PI) * i * dt) + sin((30 * 2 * PI) * i * dt) + dis(gen);
     }
 
-    output = dft.DFT(input);
+    // output = dft.DFT(input);
 }
 
 void loop() {
     // inte.interpreter(code);
 
+    /*
     for (int i = 0; i < N; ++i) {
         float freq = i * df;
         float fft = abs(output[i]);
@@ -124,7 +126,9 @@ void loop() {
         Serial.print(" ");
         Serial.print(fft);
         Serial.println();
-    }
+    }*/
+    RivestCipher4 RC4("000");
+    Serial.println(RC4.encrypt("2837271954").c_str());
 }
 
 // git config --global --unset http.proxy
