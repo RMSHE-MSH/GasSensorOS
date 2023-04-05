@@ -35,6 +35,7 @@
 #include <fourier_transform.hpp>
 #include <rivest_cipher_4.hpp>
 #include <tree.hpp>
+#include <wifi_connector.hpp>
 
 /*
 Interpreter inte;
@@ -95,6 +96,8 @@ float df = 1.0 / (N * dt);
 std::vector<float> input(N);
 std::vector<std::complex<float>> output;
 
+WiFiConnector WIFI("ccdx-wifi", "", true);
+
 void setup() {
     Serial.begin(115200);
 
@@ -109,8 +112,14 @@ void setup() {
         // input[i] = sin((10 * 2 * PI) * i * dt) + sin((20 * 2 * PI) * i * dt) + sin((30 * 2 * PI) * i * dt) + dis(gen);
     }
 
+    delay(3000);
+
+    WIFI.connect();
+
     // output = dft.DFT(input);
 }
+
+// RivestCipher4 RC4("000");
 
 void loop() {
     // inte.interpreter(code);
@@ -127,8 +136,8 @@ void loop() {
         Serial.print(fft);
         Serial.println();
     }*/
-    RivestCipher4 RC4("000");
-    Serial.println(RC4.encrypt("2837271954").c_str());
+
+    // Serial.println(RC4.encrypt("2837271954").c_str());
 }
 
 // git config --global --unset http.proxy
