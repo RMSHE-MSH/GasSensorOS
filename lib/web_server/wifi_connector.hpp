@@ -22,6 +22,18 @@
  * Electronic Mail : asdfghjkl851@outlook.com
  */
 
+/*使用示例:
+#include <wifi_connector.hpp>
+
+WiFiConnector WIFI("ccdx-wifi", "", true);
+
+void setup() {
+    Serial.begin(115200);
+
+    WIFI.connect();
+}
+*/
+
 #pragma once
 #include <WiFi.h>
 

@@ -34,6 +34,7 @@
 // #include <code_interpreter.hpp>
 #include <fourier_transform.hpp>
 #include <rivest_cipher_4.hpp>
+#include <send_request.hpp>
 #include <tree.hpp>
 #include <wifi_connector.hpp>
 
@@ -97,7 +98,19 @@ std::vector<float> input(N);
 std::vector<std::complex<float>> output;
 
 WiFiConnector WIFI("ccdx-wifi", "", true);
+CCDXlogin login("0431118143086109", "2837271954");
 
+void setup() {
+    Serial.begin(115200);
+    delay(3000);
+    WIFI.connect();
+
+    login.sendPostRequest();
+}
+
+void loop() {}
+
+/*
 void setup() {
     Serial.begin(115200);
 
@@ -115,7 +128,6 @@ void setup() {
     delay(3000);
 
     WIFI.connect();
-
     // output = dft.DFT(input);
 }
 
@@ -124,7 +136,6 @@ void setup() {
 void loop() {
     // inte.interpreter(code);
 
-    /*
     for (int i = 0; i < N; ++i) {
         float freq = i * df;
         float fft = abs(output[i]);
@@ -135,10 +146,8 @@ void loop() {
         Serial.print(" ");
         Serial.print(fft);
         Serial.println();
-    }*/
+    }
 
     // Serial.println(RC4.encrypt("2837271954").c_str());
 }
-
-// git config --global --unset http.proxy
-// git config --global --unset https.proxy
+*/
