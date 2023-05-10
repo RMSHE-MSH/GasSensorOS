@@ -21,68 +21,94 @@
 
 这个类实现了一个通用的树数据结构，包括节点的添加、删除、查找、遍历等基本操作。该树数据结构由两个类组成：`TreeNode`和`Tree`。`TreeNode`表示一树节点，包含节点数据、子节点列表、父节点等属性；`Tree`表示整个树结构，包含根节点以及树的遍历、节点查找、节点删除等操作。具体来说，`TreeNode`类包含了添加子节点、查找子节点、删除子节点等方法。其中，添加子节点使用了`C++11`中的智能指针`std::unique_ptr`，确保了子节点的内存管理安全；查找子节点使用了递归的方式，深度优先遍历整个子树；删除子节点则使用了迭代的方式，遍历整个子树进行删除操作。`Tree`类包含了树的遍历、节点查找、节点删除等方法。其中，遍历操作分为深度优先遍历和广度优先遍历两种方式；节点查找操作同样使用了递归的方式，在根节点开始向下搜索整个子树；节点删除操作则使用了递归的方式，在整个子树中进行删除操作。总的来说，该树数据结构提供了基本的树操作，能够满足一些基本的需求。但是需要注意的是，该树数据结构没有进行任何的平衡操作，因此对于较大的树可能会存在效率问题。
 
+*This is a lightweight, general-purpose tree data structure container, with the source code available in the `tree.hpp` file. This module is one of the components of GasSensorOS and was originally developed for the GS_Code code interpreter.*
+
+## *Implementation*
+
+*This class implements a general tree data structure, including basic operations such as adding, deleting, searching, and traversing nodes. The tree data structure consists of two classes: `TreeNode` and `Tree`.* 
+
+*`TreeNode` represents a tree node, including node data, a list of child nodes, and parent node properties. `Tree` represents the entire tree structure, including root nodes and operations such as tree traversal, node searching, and node deletion.*
+
+### *TreeNode Class*
+
+*The `TreeNode` class contains methods for adding, searching, and deleting child nodes. Adding child nodes uses the smart pointer `std::unique_ptr` from C++11, ensuring safe memory management of child nodes. Searching for child nodes uses a recursive method, traversing the entire subtree in a depth-first manner. Deleting child nodes uses an iterative method, traversing the entire subtree for deletion operations.*
+
+### *Tree Class*
+
+*The `Tree` class contains methods for tree traversal, node searching, and node deletion. Traversal operations are divided into two methods: depth-first traversal and breadth-first traversal. Node searching uses a recursive method, searching the entire subtree downwards from the root node. Node deletion uses a recursive method to delete the entire subtree.*
+
+## *Usage*
+
+*This tree data structure provides basic tree operations that can meet some basic needs. However, it should be noted that this tree data structure does not perform any balancing operations, so there may be efficiency issues for larger trees.*
+
+*To use this container, simply include the `tree.hpp` file in your project and instantiate the `Tree` class. You can then use the provided methods to add, delete, search, and traverse nodes in the tree data structure.*
+
+## *Conclusion*
+
+*Overall, this tree data structure provides a simple and efficient way to manage tree data structures in C++. It is a useful tool for those working with large sets of data that need to be organized in a tree structure.*
+
 #  `TreeNode` 类 - `TreeNode` class
 
 ## 成员 - Members
 
 ### 构造函数 - Constructors
 
-| 名称 - Name | 说明 - Description                                           |
-| :---------- | :----------------------------------------------------------- |
+| 名称 - Name | 说明 - Description                                                                                                                                                                                                               |
+| :---------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | TreeNode    | 构造节点. 该节点拥有值`data`和指向其父节点的指针`parent_node_ptr`这两个可构造的属性. <br/>*Constructing a node. The node has two constructible attributes, the value `data` and a pointer to its parent node `parent_node_ptr`.* |
 
 ### 变量 - Variables
 
-| 名称 - Name | 说明 - Description                                           |
-| :---------- | :----------------------------------------------------------- |
-| node_data   | 储存这个节点的值. <br/>*Store the value of this node.*       |
+| 名称 - Name | 说明 - Description                                                                      |
+| :---------- | :-------------------------------------------------------------------------------------- |
+| node_data   | 储存这个节点的值. <br/>*Store the value of this node.*                                  |
 | children    | 储存指向这个节点的子节点的指针. <br/>*Stores a pointer to the child node of this node.* |
-| parent      | 储存指向这个节点的父节点的指针. <br/>*Store a pointer to the parent of this node.* |
+| parent      | 储存指向这个节点的父节点的指针. <br/>*Store a pointer to the parent of this node.*      |
 
 ### 方法 - Functions
 
-| 名称 - Name    | 说明 - Description                                           |
-| :------------- | :----------------------------------------------------------- |
-| addChild       | 向当前节点添加一个子节点. <br/>*Add a child node to the current node.* |
-| findChild      | 在当前节点的子节点中查找节点. <br/>*Find a node among the children of the current node.* |
-| findDescendant | 在当前节点的后裔中查找节点. <br/>*Find a node among the descendants of the current node.* |
-| hasChildren    | 判断在当前节点的指定子节点是否有孩子. <br/>*Determine if a child of the current node has children.* |
+| 名称 - Name    | 说明 - Description                                                                                                |
+| :------------- | :---------------------------------------------------------------------------------------------------------------- |
+| addChild       | 向当前节点添加一个子节点. <br/>*Add a child node to the current node.*                                            |
+| findChild      | 在当前节点的子节点中查找节点. <br/>*Find a node among the children of the current node.*                          |
+| findDescendant | 在当前节点的后裔中查找节点. <br/>*Find a node among the descendants of the current node.*                         |
+| hasChildren    | 判断在当前节点的指定子节点是否有孩子. <br/>*Determine if a child of the current node has children.*               |
 | deleteChild    | 删除父节点的一个无孩子节点(删除树叶节点). <br/>*Delete a childless node of the parent node (delete a leaf node).* |
 
 # `Tree` 类 - `Tree` class
 ## 成员 - Members
 ### 构造函数 - Constructors
 
-| 名称 - Name | 说明 - Description                                           |
-| :---------- | :----------------------------------------------------------- |
+| 名称 - Name | 说明 - Description                                                                                             |
+| :---------- | :------------------------------------------------------------------------------------------------------------- |
 | Tree        | 构造一个树, 创建树的第一个节点(根节点). <br/>*Construct a tree, creating the first node (`root`) of the tree.* |
 
 ### 变量 - Variables
 
-| 名称 - Name      | 说明 - Description                                           |
-| :--------------- | :----------------------------------------------------------- |
-| root             | 储存树的根节点. <br/>*The root node of the storage tree.*    |
+| 名称 - Name      | 说明 - Description                                                                                                                                                                |
+| :--------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| root             | 储存树的根节点. <br/>*The root node of the storage tree.*                                                                                                                         |
 | current_node_ptr | 储存最后一次添加节点后的指针位置(初始化时设为根节点指针). <br/>*Store the position of the pointer after the last node was added (set to the root node pointer at initialization)* |
 
 ### 方法 - Functions
 
-| 名称 - Name        | 说明 - Description                                           |
-| :----------------- | :----------------------------------------------------------- |
-| addNode            | 向节点添加子节点, 并将指向新增节点的指针保存到类成员变量 `current_node_ptr` 中. <br/>*Add a child node to the node, and save the pointer to the new node in the class member variable `current_node_ptr`.* |
-| traversalDFS       | 以深度优先的方式遍历树. <br/>*Traverses the tree in a depth-first style.* |
-| traversalBFS       | 以广度优先的方式遍历树. <br/>*Traversing the tree in a breadth-first style.* |
-| findNode           | 在树中查找节点. <br/>*Find nodes in the tree.*               |
-| hasChildren        | 判断指定节点是否有孩子. <br/>*Determine if the specified node has children.* |
-| getDepth           | 递归地计算树的深度(高度)(默认统计整颗树的深度). <br/>*Recursively calculates the depth (height) of the tree (by default the depth of the whole tree is counted).* |
-| getDegree          | 获取节点的度(对于一个给定的节点，其子节点的数量称为度. 一个叶子的度数一定是零) <br/>*Get the degree of a node (for a given node, the number of its children is called the degree. The degree of a leaf must be zero)* |
-| get_degree_of_tree | 获取树的度(树的度是指树中一个节点的最大度) <br/>*Get the degree of the tree (the degree of the tree is the maximum degree of a node in the tree).* |
-| getBreadth         | 获取树或树枝的叶子数量(叶子即没有子节点的节点，也称做终端节点) <br/>*Get the number of leaves of the tree or branch (leaves are nodes without children, also known as terminal nodes).* |
-| getWidth           | 获取树的宽度或指定节点所在层的宽度(宽度指一个层的节点数) <br/>*Get the width of the tree or the width of the specified node's layer (width refers to the number of nodes in a layer).* |
+| 名称 - Name        | 说明 - Description                                                                                                                                                                                                                                            |
+| :----------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| addNode            | 向节点添加子节点, 并将指向新增节点的指针保存到类成员变量 `current_node_ptr` 中. <br/>*Add a child node to the node, and save the pointer to the new node in the class member variable `current_node_ptr`.*                                                    |
+| traversalDFS       | 以深度优先的方式遍历树. <br/>*Traverses the tree in a depth-first style.*                                                                                                                                                                                     |
+| traversalBFS       | 以广度优先的方式遍历树. <br/>*Traversing the tree in a breadth-first style.*                                                                                                                                                                                  |
+| findNode           | 在树中查找节点. <br/>*Find nodes in the tree.*                                                                                                                                                                                                                |
+| hasChildren        | 判断指定节点是否有孩子. <br/>*Determine if the specified node has children.*                                                                                                                                                                                  |
+| getDepth           | 递归地计算树的深度(高度)(默认统计整颗树的深度). <br/>*Recursively calculates the depth (height) of the tree (by default the depth of the whole tree is counted).*                                                                                             |
+| getDegree          | 获取节点的度(对于一个给定的节点，其子节点的数量称为度. 一个叶子的度数一定是零) <br/>*Get the degree of a node (for a given node, the number of its children is called the degree. The degree of a leaf must be zero)*                                         |
+| get_degree_of_tree | 获取树的度(树的度是指树中一个节点的最大度) <br/>*Get the degree of the tree (the degree of the tree is the maximum degree of a node in the tree).*                                                                                                            |
+| getBreadth         | 获取树或树枝的叶子数量(叶子即没有子节点的节点，也称做终端节点) <br/>*Get the number of leaves of the tree or branch (leaves are nodes without children, also known as terminal nodes).*                                                                       |
+| getWidth           | 获取树的宽度或指定节点所在层的宽度(宽度指一个层的节点数) <br/>*Get the width of the tree or the width of the specified node's layer (width refers to the number of nodes in a layer).*                                                                        |
 | getLevel           | 获取指定节点的层级(一个节点的层级是它与根节点之间唯一路径上的边的数量, 根节点层级为零). <br/>*Get the layer of the specified node (the layer of a node is the number of edges on the unique path between it and the root node, the root node layer is zero).* |
-| getSize            | 获取树或树枝的大小(节点总数). <br/>*Get the size of a tree or branch.* |
-| empty              | 判断树是否为空. <br/>*Determine if the tree is empty*        |
-| deleteNode         | 递归删除一个节点及其后裔. <br/>*Recursively delete a node and its descendants.* |
-| deleteTree         | 删除一颗树. <br/>*Delete a tree.*                            |
+| getSize            | 获取树或树枝的大小(节点总数). <br/>*Get the size of a tree or branch.*                                                                                                                                                                                        |
+| empty              | 判断树是否为空. <br/>*Determine if the tree is empty*                                                                                                                                                                                                         |
+| deleteNode         | 递归删除一个节点及其后裔. <br/>*Recursively delete a node and its descendants.*                                                                                                                                                                               |
+| deleteTree         | 删除一颗树. <br/>*Delete a tree.*                                                                                                                                                                                                                             |
 
 ---
 

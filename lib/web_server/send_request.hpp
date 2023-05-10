@@ -23,6 +23,7 @@
  */
 
 #pragma once
+#include <ArduinoJson.h>
 #include <HTTPClient.h>
 #include <WiFi.h>
 #include <WiFiClient.h>
@@ -33,6 +34,22 @@
 class CCDXlogin {
    public:
     CCDXlogin(std::string username, std::string password) : username_(username), password_(password) {}
+
+    void getTimestamp() {
+        http.begin(
+            "http://1.1.1.2/");
+        int httpResponseCode = http.GET();
+        Serial.println(httpResponseCode);
+
+        String contentType = http.header("Content-Type");
+        String date = http.header("Date");
+        Serial.print("Content-Type: ");
+        Serial.println(contentType);
+        Serial.print("date: ");
+        Serial.println(date);
+
+        http.end();
+    }
 
     void sendPostRequest() {
         // timestamp = static_cast<std::string>(String(millis()).c_str());

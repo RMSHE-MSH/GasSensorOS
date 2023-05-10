@@ -104,11 +104,12 @@ void setup() {
     Serial.begin(115200);
     delay(3000);
     WIFI.connect();
-
-    login.sendPostRequest();
 }
 
-void loop() {}
+void loop() {
+    delay(3000);
+    login.getTimestamp();
+}
 
 /*
 void setup() {
