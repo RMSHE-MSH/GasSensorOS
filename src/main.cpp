@@ -123,11 +123,12 @@ void runTests() {
 
 void setup() {
     Serial.begin(115200);
-    IO.gpioInit(2, GPIO_OUT_PP);
-    IO.gpioResetBit(2);
+    IO.gpioInit(4, GPIO_OUT_PP);
+    IO.gpioResetBit(4);
 }
 
 void loop() {
     runTests();
-    delay(5000);
+    IO.gpioToggleBit(4);
+    delay(3000);
 }
