@@ -57,7 +57,11 @@
         "regex": "cpp",
         "random": "cpp",
         "complex": "cpp",
-        "codecvt": "cpp"
+        "codecvt": "cpp",
+        "iterator": "cpp",
+        "map": "cpp",
+        "memory_resource": "cpp",
+        "optional": "cpp"
     },
     "C_Cpp.default.cppStandard": ""
 }
