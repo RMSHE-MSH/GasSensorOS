@@ -21,17 +21,17 @@
  *
  * Electronic Mail : asdfghjkl851@outlook.com
  */
-
 #include <CPPSTL.h>
-#include <esp32_pin_defi.h>
-#include <io.h>
 #include <kernel_tasks.h>
 #include <random.h>
 #include <systime.h>
 
 #include <random>
+#include <serial_warning.hpp>
 
 // #include <code_interpreter.hpp>
+#include <esp32_s3_pin_defi.h>
+#include <io_esp32_s3.h>
 #include <string_similarity_evaluator.h>
 #include <string_strength_evaluator.h>
 
@@ -43,25 +43,39 @@
 #include <tree.hpp>
 #include <wifi_connector.hpp>
 
-std::string str1 = "HelloWorld!";
-std::string str2 = "HalloWord!";
-
-GPIOs IO;
-StringStrengthEvaluator SSE;
-StringSimilarityEvaluator SsE(str1, str2);
+GPIOs Group1, Group2;
 
 void setup() {
     Serial.begin(115200);
-    IO.gpioInit(2, GPIO_OUT_PP);
-    IO.gpioResetBit(2);
+    delay(4000);
+
+    Group1.gpioInit(35, {GPIO_OUT, GPIO_PP});
+    Group2.gpioInitGroup({1, 2, 42, 41, 40, 39, 38, 37, 36}, {GPIO_IN, GPIO_FLOAT});
 }
 
 void loop() {
-    delay(3000);
+    Group1.gpioToggleGroup();
+    Group2.gpioReplaceConfig(1, {GPIO_PD});
 
-    Serial.println(SSE.evaluateString(str1));
-    Serial.println(SSE.evaluateString(str2));
-    Serial.println(SsE.evaluateStringSimilarity());
+    auto config = Group1.gpioReadConfigBit(35);
+    Serial.print("(35 : status, tri_state, mode, io_type) = (");
+    Serial.print(config.status);
+    Serial.print(", ");
+    Serial.print(config.tri_state, HEX);
+    Serial.print(", ");
+    Serial.print(config.mode, HEX);
+    Serial.print(", ");
+    Serial.print(config.io_type, HEX);
+    Serial.print(")");
+    Serial.print("\n");
 
-    IO.gpioToggleBit(2);
+    for (auto& i : Group2.gpioReadDataGroup()) {
+        Serial.print(i.first);
+        Serial.print(":");
+        Serial.print(i.second);
+        Serial.print("\t");
+    }
+    Serial.print("\n");
+
+    delay(5000);
 }

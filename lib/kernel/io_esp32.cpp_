@@ -1,5 +1,5 @@
 /**
- * @file io.cpp
+ * @file io_esp32.cpp
  * @date 26.02.2023
  * @author RMSHE
  *
@@ -25,7 +25,7 @@
 #include <driver/adc.h>
 #include <esp32_pin_defi.h>
 #include <esp_adc_cal.h>
-#include <io.h>
+#include <io_esp32.h>
 
 // ESP32-WROOM-32E引脚定义(定义了MCU的GPIO编号, 以及是否支持输入/输出/模拟)
 const std::unordered_map<uint8_t, std::unordered_set<uint8_t>> esp32_wroom_32e_gpios = {{0, {INPUT_OK, OUTPUT_OK, ADC2_OK, PWM_OK}},

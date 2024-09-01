@@ -1,5 +1,5 @@
 /**
- * @file io.h
+ * @file io_esp32.h
  * @date 26.02.2023
  * @author RMSHE
  *
@@ -25,6 +25,7 @@
 #pragma once
 
 #include <Arduino.h>
+#include <driver/gpio.h>
 #include <driver/ledc.h>
 
 #include <cstdint>

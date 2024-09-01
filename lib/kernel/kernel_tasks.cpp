@@ -24,7 +24,6 @@
 
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
-#include <io.h>
 #include <kernel_tasks.h>
 #include <systime.h>
 
