@@ -58,7 +58,7 @@
 
 | 名称                              | 版本号     | 简介                                                         | 说明文档                                                     |
 | --------------------------------- | :--------- | :----------------------------------------------------------- | ------------------------------------------------------------ |
-| `pbkdf2_hmac_sha512.hpp`          | 26.12.2024 | PBKDF2_HMAC_SHA512 是一个基于 PBKDF2 和 HMAC-SHA512 算法设计的密钥派生类，专用于从密码和盐中生成高安全性的派生密钥. | [PBKDF2 HMAC SHA512 Documentation](lib/encrypt/PBKDF2 HMAC SHA512 Documentation.md) |
+| `pbkdf2_hmac_sha512.hpp`          | 26.12.2024 | PBKDF2_HMAC_SHA512 是一个基于 PBKDF2 和 HMAC-SHA512 算法设计的密钥派生类，专用于从密码和盐中生成高安全性的派生密钥. | [PBKDF2 HMAC SHA512 Documentation](/lib/encrypt/PBKDF2 HMAC SHA512 Documentation.md) |
 | `random.cpp`                      | 26.02.2023 | 生成真随机数                                                 |                                                              |
 | `rivest_cipher_4.hpp`             | 05.04.2023 | RivestCipher4加密算法                                        |                                                              |
 | `string_similarity_evaluator.cpp` | 29.03.2024 | 用于评估两个字符串(密码)的相似度                             |                                                              |
@@ -93,6 +93,6 @@
 ### `sys_services` 系统服务组件
 | 名称                 | 版本号     | 简介                                                                                                                                                                          | 说明文档 |
 | -------------------- | :--------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
-| `user_data_table.hpp` | 28.12.2024 | 多用户数据管理类，主要用于管理用户的添加、删除和验证操作。通过结合 PBKDF2 哈希算法和真随机盐值（Salt）生成用户密码的派生密钥，不直接存储用户密码，确保用户数据的安全性。 | [User Data Table Documentation](lib/sys_services/User Data Table Documentation.md) |
+| `user_data_table.hpp` | 28.12.2024 | 多用户数据管理类，主要用于管理用户的添加、删除和验证操作。通过结合 PBKDF2 哈希算法和真随机盐值（Salt）生成用户密码的派生密钥，不直接存储用户密码，确保用户数据的安全性。 | [User Data Table Documentation](/lib/sys_services/User Data Table Documentation.md) |
 
 ---
