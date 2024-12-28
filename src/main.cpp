@@ -23,26 +23,58 @@
  */
 #include <CPPSTL.h>
 #include <kernel_tasks.h>
-#include <random.h>
 #include <systime.h>
 
-#include <random>
 #include <serial_warning.hpp>
-
+#include <user_data_table.hpp>
 // #include <code_interpreter.hpp>
 #include <esp32_s3_pin_defi.h>
 #include <io_esp32_s3.h>
+#include <random.h>
 #include <string_similarity_evaluator.h>
 #include <string_strength_evaluator.h>
 
 #include <data_table.hpp>
 #include <fourier_transform.hpp>
+#include <random>
 #include <rivest_cipher_4.hpp>
 #include <send_request.hpp>
 #include <string_edit.hpp>
 #include <tree.hpp>
+#include <user_data_table.hpp>
 #include <wifi_connector.hpp>
 
+USER_DATA user_list;
+
+void setup() {
+    Serial.begin(115200);
+    delay(4000);
+
+    // 使用默认值初始化用户数据库
+    USER_DATA user_data;
+
+    // 添加用户
+    user_data.add_user("Alice", "password123");
+    user_data.add_user("Bob", "mypassword");
+
+    // 打印用户数据
+    user_data.print();
+
+    // 验证用户
+    if (user_data.verify_user("Alice", "password123")) {
+        Serial.println("验证通过");
+    } else {
+        Serial.println("验证失败");
+    }
+
+    // 删除用户
+    user_data.delete_user("Bob");
+    user_data.print();
+}
+// 空循环函数
+void loop() {}
+
+/*
 GPIOs Group1, Group2;
 
 void setup() {
@@ -51,6 +83,11 @@ void setup() {
 
     Group1.gpioInit(35, {GPIO_OUT, GPIO_PP});
     Group2.gpioInitGroup({1, 2, 42, 41, 40, 39, 38, 37, 36}, {GPIO_IN, GPIO_FLOAT});
+
+    // std::string password = pbkdf.PBKDF("GAATTC", trueRandom(64));
+    Serial.print("\n");
+    // Serial.print(password.c_str());
+    Serial.print("\n");
 }
 
 void loop() {
@@ -79,3 +116,4 @@ void loop() {
 
     delay(5000);
 }
+*/

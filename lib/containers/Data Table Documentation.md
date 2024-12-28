@@ -28,7 +28,7 @@
 | ------------------------------------------------------------ | ------------------------------------------------------------ |
 | `void insertCell(size_t row, size_t col, const std::string& value)` | **在指定位置插入一个新单元格数据，表格会自动扩展以容纳新数据。**<br/>`row`: 要插入的行索引。<br/>`col`: 要插入的列索引。<br/>`value`: 要插入的字符串值。 |
 | `void insertRow(const std::vector<std::string>& values = {}, size_t row = size_t_max)` | **在指定位置插入一行，如果 `values` 超出列数，则自动截断；不足时用空字符串填充。**<br/>`values`:  插入行的初始数据。<br/>`row`: 要插入行的位置索引。如果未指定，则在表格末尾插入。 |
-| `void insertCol(const std::vector<std::string>& values = {}, size_t col = size_t_max)` | **在指定位置插入一列，如果 `values` 超出行数，则自动截断；不足时用空字符串填充。**<br/>`values`:  插入行的初始数据。<br/>`col`: 要插入列的位置索引。如果未指定，则在表格末尾插入。 |
+| `void insertCol(const std::vector<std::string>& values = {}, size_t col = size_t_max)` | **在指定位置插入一列，如果 `values` 超出行数，则自动截断；不足时用空字符串填充。**<br/>`values`:  插入列的初始数据。<br/>`col`: 要插入列的位置索引。如果未指定，则在表格末尾插入。 |
 | `void deleteRow(size_t row)`                                 | **删除指定行并调整表格大小。**<br/>`row`:  要删除行的位置索引。 |
 | `void deleteCol(size_t col)`                                 | **删除指定列并调整表格大小。**<br/>`col`:  要删除列的位置索引。 |
 
