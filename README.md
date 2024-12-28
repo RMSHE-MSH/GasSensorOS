@@ -58,7 +58,7 @@
 
 | 名称                              | 版本号     | 简介                                                         | 说明文档                                                     |
 | --------------------------------- | :--------- | :----------------------------------------------------------- | ------------------------------------------------------------ |
-| `pbkdf2_hmac_sha512.hpp`          | 26.12.2024 | PBKDF2_HMAC_SHA512 是一个基于 PBKDF2 和 HMAC-SHA512 算法设计的密钥派生类，专用于从密码和盐中生成高安全性的派生密钥. | [PBKDF2 HMAC SHA512 Documentation](/lib/encrypt/PBKDF2 HMAC%20SHA512%20Documentation.md) |
+| `pbkdf2_hmac_sha512.hpp`          | 26.12.2024 | PBKDF2_HMAC_SHA512 是一个基于 PBKDF2 和 HMAC-SHA512 算法设计的密钥派生类，专用于从密码和盐中生成高安全性的派生密钥. | [PBKDF2 HMAC SHA512 Documentation](/lib/encrypt/PBKDF2%20HMAC%20SHA512%20Documentation.md) |
 | `random.cpp`                      | 26.02.2023 | 生成真随机数                                                 |                                                              |
 | `rivest_cipher_4.hpp`             | 05.04.2023 | RivestCipher4加密算法                                        |                                                              |
 | `string_similarity_evaluator.cpp` | 29.03.2024 | 用于评估两个字符串(密码)的相似度                             |                                                              |
