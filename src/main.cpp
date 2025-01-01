@@ -1,119 +1,30 @@
-/**
- * @file main.cpp
- * @date 26.02.2023
- * @author RMSHE
- *
- * < GasSensorOS >
- * Copyright(C) 2023 RMSHE. All rights reserved.
- *
- * This program is free software : you can redistribute it and /or modify
- * it under the terms of the GNU Affero General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program.If not, see < https://www.gnu.org/licenses/>.
- *
- * Electronic Mail : asdfghjkl851@outlook.com
- */
-#include <CPPSTL.h>
-#include <kernel_tasks.h>
-#include <systime.h>
+#include <command_table.hpp>
 
-#include <serial_warning.hpp>
-#include <user_data_table.hpp>
-// #include <code_interpreter.hpp>
-#include <esp32_s3_pin_defi.h>
-#include <io_esp32_s3.h>
-#include <random.h>
-#include <string_similarity_evaluator.h>
-#include <string_strength_evaluator.h>
-
-#include <data_table.hpp>
-#include <fourier_transform.hpp>
-#include <random>
-#include <rivest_cipher_4.hpp>
-#include <send_request.hpp>
-#include <string_edit.hpp>
-#include <tree.hpp>
-#include <user_data_table.hpp>
-#include <wifi_connector.hpp>
-
-USER_DATA user_list;
+class COMMAND_FUNCS {
+   public:
+    void test1(const std::vector<std::string>& flags, const std::vector<std::string>& parameters) { Serial.println("test1"); }
+    void test2(const std::vector<std::string>& flags, const std::vector<std::string>& parameters) { Serial.println("test2"); }
+    void test3(const std::vector<std::string>& flags, const std::vector<std::string>& parameters) { Serial.println("test3"); }
+};
 
 void setup() {
     Serial.begin(115200);
     delay(4000);
 
-    // 使用默认值初始化用户数据库
-    USER_DATA user_data;
+    COMMAND_TABLE cmd_table;
+    COMMAND_FUNCS cmd_funcs;
 
-    // 添加用户
-    user_data.add_user("Alice", "password123");
-    user_data.add_user("Bob", "mypassword");
+    cmd_table.add_cmd("test1", {}, std::bind(&COMMAND_FUNCS::test1, &cmd_funcs, std::placeholders::_1, std::placeholders::_2));
+    cmd_table.add_cmd("test2", {}, std::bind(&COMMAND_FUNCS::test2, &cmd_funcs, std::placeholders::_1, std::placeholders::_2));
+    cmd_table.add_cmd("test3", {}, std::bind(&COMMAND_FUNCS::test3, &cmd_funcs, std::placeholders::_1, std::placeholders::_2));
 
-    // 打印用户数据
-    user_data.print();
+    cmd_table.print_commands_table();
+    cmd_table.execute_cmd("test2", {}, {});
 
-    // 验证用户
-    if (user_data.verify_user("Alice", "password123")) {
-        Serial.println("验证通过");
-    } else {
-        Serial.println("验证失败");
-    }
+    cmd_table.delete_cmd("test2");
 
-    // 删除用户
-    user_data.delete_user("Bob");
-    user_data.print();
+    cmd_table.print_commands_table();
+    cmd_table.execute_cmd("test2", {}, {});
 }
-// 空循环函数
+
 void loop() {}
-
-/*
-GPIOs Group1, Group2;
-
-void setup() {
-    Serial.begin(115200);
-    delay(4000);
-
-    Group1.gpioInit(35, {GPIO_OUT, GPIO_PP});
-    Group2.gpioInitGroup({1, 2, 42, 41, 40, 39, 38, 37, 36}, {GPIO_IN, GPIO_FLOAT});
-
-    // std::string password = pbkdf.PBKDF("GAATTC", trueRandom(64));
-    Serial.print("\n");
-    // Serial.print(password.c_str());
-    Serial.print("\n");
-}
-
-void loop() {
-    Group1.gpioToggleGroup();
-    Group2.gpioReplaceConfig(1, {GPIO_PD});
-
-    auto config = Group1.gpioReadConfigBit(35);
-    Serial.print("(35 : status, tri_state, mode, io_type) = (");
-    Serial.print(config.status);
-    Serial.print(", ");
-    Serial.print(config.tri_state, HEX);
-    Serial.print(", ");
-    Serial.print(config.mode, HEX);
-    Serial.print(", ");
-    Serial.print(config.io_type, HEX);
-    Serial.print(")");
-    Serial.print("\n");
-
-    for (auto& i : Group2.gpioReadDataGroup()) {
-        Serial.print(i.first);
-        Serial.print(":");
-        Serial.print(i.second);
-        Serial.print("\t");
-    }
-    Serial.print("\n");
-
-    delay(5000);
-}
-*/

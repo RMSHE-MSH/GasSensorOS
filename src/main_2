@@ -1,0 +1,109 @@
+/**
+ * @file main.cpp
+ * @date 26.02.2023
+ * @author RMSHE
+ *
+ * < GasSensorOS >
+ * Copyright(C) 2023 RMSHE. All rights reserved.
+ *
+ * This program is free software : you can redistribute it and /or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.If not, see < https://www.gnu.org/licenses/>.
+ *
+ * Electronic Mail : asdfghjkl851@outlook.com
+ */
+#include <CPPSTL.h>
+#include <kernel_tasks.h>
+#include <systime.h>
+
+#include <serial_warning.hpp>
+#include <user_data_table.hpp>
+// #include <code_interpreter.hpp>
+#include <esp32_s3_pin_defi.h>
+#include <io_esp32_s3.h>
+#include <random.h>
+#include <string_similarity_evaluator.h>
+#include <string_strength_evaluator.h>
+
+#include <command_table.hpp>
+#include <data_table.hpp>
+#include <fourier_transform.hpp>
+#include <random>
+#include <rivest_cipher_4.hpp>
+#include <send_request.hpp>
+#include <string_edit.hpp>
+#include <tree.hpp>
+#include <user_data_table.hpp>
+#include <wifi_connector.hpp>
+
+USER_DATA user_list;
+
+void setup() {
+    Serial.begin(115200);
+    delay(4000);
+
+    COMMAND_TABLE cmd_table;
+
+    cmd_table.builtin_cmd();
+
+    cmd_table.print_commands_table();
+
+    cmd_table.execute_cmd("help", {}, {});
+    cmd_table.execute_cmd("osinfo", {}, {});
+    cmd_table.execute_cmd("test", {"-f", "-s"}, {});
+}
+// 空循环函数
+void loop() {}
+
+/*
+GPIOs Group1, Group2;
+
+void setup() {
+    Serial.begin(115200);
+    delay(4000);
+
+    Group1.gpioInit(35, {GPIO_OUT, GPIO_PP});
+    Group2.gpioInitGroup({1, 2, 42, 41, 40, 39, 38, 37, 36}, {GPIO_IN, GPIO_FLOAT});
+
+    // std::string password = pbkdf.PBKDF("GAATTC", trueRandom(64));
+    Serial.print("\n");
+    // Serial.print(password.c_str());
+    Serial.print("\n");
+}
+
+void loop() {
+    Group1.gpioToggleGroup();
+    Group2.gpioReplaceConfig(1, {GPIO_PD});
+
+    auto config = Group1.gpioReadConfigBit(35);
+    Serial.print("(35 : status, tri_state, mode, io_type) = (");
+    Serial.print(config.status);
+    Serial.print(", ");
+    Serial.print(config.tri_state, HEX);
+    Serial.print(", ");
+    Serial.print(config.mode, HEX);
+    Serial.print(", ");
+    Serial.print(config.io_type, HEX);
+    Serial.print(")");
+    Serial.print("\n");
+
+    for (auto& i : Group2.gpioReadDataGroup()) {
+        Serial.print(i.first);
+        Serial.print(":");
+        Serial.print(i.second);
+        Serial.print("\t");
+    }
+    Serial.print("\n");
+
+    delay(5000);
+}
+*/

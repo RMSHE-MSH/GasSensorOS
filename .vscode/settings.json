@@ -61,7 +61,8 @@
         "iterator": "cpp",
         "map": "cpp",
         "memory_resource": "cpp",
-        "optional": "cpp"
+        "optional": "cpp",
+        "stack": "cpp"
     },
     "C_Cpp.default.cppStandard": ""
 }

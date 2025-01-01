@@ -1,10 +1,10 @@
 /**
- * @file cmd.cpp
- * @date 26.02.2023
+ * @file command_line_interface.h
+ * @date 01.01.2025
  * @author RMSHE
  *
  * < GasSensorOS >
- * Copyright(C) 2023 RMSHE. All rights reserved.
+ * Copyright(C) 2025 RMSHE. All rights reserved.
  *
  * This program is free software : you can redistribute it and /or modify
  * it under the terms of the GNU Affero General Public License as
@@ -22,4 +22,17 @@
  * Electronic Mail : asdfghjkl851@outlook.com
  */
 
-#include <cmd.h>
+#pragma onces
+#include <functional>
+#include <string_edit.hpp>
+
+class CLI {
+   public:
+    //std::vector<std::string> analysis(std::string command_str) { splitter.split(command_str, {" "}); }
+
+    //bool verify() {}
+
+   private:
+    StringSplitter splitter;
+};
+
