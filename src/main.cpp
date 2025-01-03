@@ -1,30 +1,63 @@
-#include <command_table.hpp>
+#include <command_line_interface.h>
 
-class COMMAND_FUNCS {
-   public:
-    void test1(const std::vector<std::string>& flags, const std::vector<std::string>& parameters) { Serial.println("test1"); }
-    void test2(const std::vector<std::string>& flags, const std::vector<std::string>& parameters) { Serial.println("test2"); }
-    void test3(const std::vector<std::string>& flags, const std::vector<std::string>& parameters) { Serial.println("test3"); }
-};
+#include <fs_Interface.hpp>
+
+Command_Line_Interface CLI;
 
 void setup() {
     Serial.begin(115200);
     delay(4000);
 
-    COMMAND_TABLE cmd_table;
-    COMMAND_FUNCS cmd_funcs;
+    FSInterface fs;
 
-    cmd_table.add_cmd("test1", {}, std::bind(&COMMAND_FUNCS::test1, &cmd_funcs, std::placeholders::_1, std::placeholders::_2));
-    cmd_table.add_cmd("test2", {}, std::bind(&COMMAND_FUNCS::test2, &cmd_funcs, std::placeholders::_1, std::placeholders::_2));
-    cmd_table.add_cmd("test3", {}, std::bind(&COMMAND_FUNCS::test3, &cmd_funcs, std::placeholders::_1, std::placeholders::_2));
+    fs.mount();
 
-    cmd_table.print_commands_table();
-    cmd_table.execute_cmd("test2", {}, {});
+    fs.open("/test1.txt", "w");
 
-    cmd_table.delete_cmd("test2");
+    // 要写入的数据
+    std::string data = "Hello, LittleFS!";
 
-    cmd_table.print_commands_table();
-    cmd_table.execute_cmd("test2", {}, {});
+    // 调用 write 函数写入数据
+    size_t bytesWritten = fs.write(data.c_str(), data.size());
+
+    // 输出写入的字节数
+    Serial.print("写入了 ");
+    Serial.print(bytesWritten);
+    Serial.println(" 字节数据");
+
+    fs.close();
+
+    fs.open("/test1.txt", "r");
+
+    // 创建一个缓冲区来存储数据
+    uint8_t buffer[512];  // 假设一次最多读取 512 字节
+
+    // 从文件读取数据
+    size_t bytesRead = fs.read(buffer, sizeof(buffer));
+
+    // 输出读取的字节数
+    Serial.print("读取了 ");
+    Serial.print(bytesRead);
+    Serial.println(" 字节数据:");
+
+    // 输出读取的数据
+    for (size_t i = 0; i < bytesRead; i++) {
+        Serial.print((char)buffer[i]);  // 将字节作为字符打印
+    }
+
+    fs.close();
+
+    if (fs.exists("/test1.txt")) {
+        Serial.println("\n文件存在");
+    } else {
+        Serial.println("\n文件不存在");
+    }
+
+    Serial.println(fs.getSize("/test1.txt"));
+
+    fs.remove("/test1.txt");
+
+    fs.unmount();
 }
 
-void loop() {}
+void loop() { CLI.run(); }

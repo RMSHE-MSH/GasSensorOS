@@ -33,6 +33,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
+#include <wifi_connector.hpp>
 
 class CMD_FUNC {
    public:
@@ -67,6 +68,12 @@ class CMD_FUNC {
         for (const auto& param : parameters) output += " " + param;
 
         Serial.println(output.c_str());
+    }
+
+    // 连接WIFI: <wifi_connect> ["SSID"] ["PASSWORD"]
+    void wifi_connect(const std::vector<std::string>& flags, const std::vector<std::string>& parameters) {
+        WiFiConnector WIFI(parameters[0].c_str(), parameters[1].c_str(), true);
+        WIFI.connect();
     }
 };
 
@@ -170,6 +177,7 @@ class COMMAND_TABLE {
         add_cmd("help", {}, std::bind(&CMD_FUNC::help, &cmd_func, std::placeholders::_1, std::placeholders::_2));
         add_cmd("osinfo", {}, std::bind(&CMD_FUNC::osinfo, &cmd_func, std::placeholders::_1, std::placeholders::_2));
         add_cmd("test", {"-f", "-s"}, std::bind(&CMD_FUNC::test, &cmd_func, std::placeholders::_1, std::placeholders::_2));
+        add_cmd("wifi_connect", {}, std::bind(&CMD_FUNC::wifi_connect, &cmd_func, std::placeholders::_1, std::placeholders::_2));
     }
 
     /**
