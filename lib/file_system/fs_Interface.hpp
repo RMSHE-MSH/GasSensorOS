@@ -73,8 +73,9 @@ class FSInterface {
      */
     bool open(const std::string& path, const char* mode) {
         work_file = LittleFS.open(path.c_str(), mode);
-        if (!work_file) {
+        if (!work_file || work_dir.isDirectory()) {
             WARN(WarningLevel::ERROR, "打开文件失败: %s", path.c_str());
+            work_file.close();
             return false;
         }
         return true;
@@ -87,9 +88,10 @@ class FSInterface {
      * @return false 打开失败
      */
     bool openDir(const std::string& path) {
-        work_dir = LittleFS.openDir(path.c_str());
-        if (!work_dir) {
+        work_dir = LittleFS.open(path.c_str());
+        if (!work_dir || !work_dir.isDirectory()) {
             WARN(WarningLevel::ERROR, "打开目录失败: %s", path.c_str());
+            work_dir.close();
             return false;
         }
         return true;
@@ -102,7 +104,7 @@ class FSInterface {
      */
     bool close() {
         work_file.close();
-        if (work_file) WARN(WarningLevel::ERROR, "文件关闭失败: %s", work_file.name().c_str());
+        if (work_file) WARN(WarningLevel::ERROR, "文件关闭失败: %s", work_file.name());
         return !work_file;
     }
 
@@ -234,7 +236,15 @@ class FSInterface {
      * @brief 获取当前目录下的下一个文件或目录的名称
      * @return 当前文件或目录的名称，若没有更多文件，返回空字符串
      */
-    std::string dirNextName() { return work_dir.next(); }
+    std::string dirNextName() {
+        if (work_dir) {
+            File file = work_dir.openNextFile();
+            if (file) {
+                return std::string(file.name());
+            }
+        }
+        return "";
+    }
 
     /**
      * @brief 获取当前打开目录下的所有文件或目录的名称列表
@@ -242,10 +252,12 @@ class FSInterface {
      */
     std::vector<std::string> listFiles() {
         std::vector<std::string> list;
-        std::string file_name = work_dir.next();
-        while (!file_name.empty()) {
-            list.push_back(file_name);
-            file_name = work_dir.next();
+        if (work_dir) {
+            File file = work_dir.openNextFile();
+            while (file) {
+                list.push_back(file.name());
+                file = work_dir.openNextFile();
+            }
         }
         return list;
     }
@@ -304,5 +316,5 @@ class FSInterface {
 
    private:
     File work_file;  // 当前操作的文件对象
-    Dir work_dir;    // 当前操作的目录对象
+    File work_dir;   // 当前操作的目录对象
 };

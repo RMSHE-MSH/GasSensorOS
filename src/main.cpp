@@ -1,9 +1,12 @@
 #include <command_line_interface.h>
 
-#include <fs_Interface.hpp>
+#include <file_manager.hpp>
 
 Command_Line_Interface CLI;
+StringSplitter splitter;
+FileManager fm;
 
+/*
 void setup() {
     Serial.begin(115200);
     delay(4000);
@@ -58,6 +61,26 @@ void setup() {
     fs.remove("/test1.txt");
 
     fs.unmount();
+}
+
+*/
+
+void setup() {
+    Serial.begin(115200);
+    delay(4000);
+
+    // 创建文件并写入字符串数据
+    fm.writeFileAsString("/test.txt", "Hello, ESP32 FileManager!");
+
+    // 读取文件作为字符串
+    std::string text = fm.readFileAsString("/test.txt");
+    Serial.println(text.c_str());  // 输出：Hello, ESP32 FileManager!
+
+    // 读取文件作为字节数组
+    std::vector<uint8_t> byteData = fm.readFileAsBytes("/test.txt");
+    for (uint8_t byte : byteData) {
+        Serial.printf("%c", byte);
+    }
 }
 
 void loop() { CLI.run(); }
