@@ -225,12 +225,55 @@ class FSInterface {
     }
 
     /**
-     * @brief 判断是否为目录
-     * 该函数判断当前操作的文件是否为目录。
-     * @return true 是目录
-     * @return false 不是目录
+     * @brief 递归删除指定路径的文件或目录
+     *
+     * 该函数根据传入路径的类型，判断是删除文件还是递归删除目录。支持删除文件和目录。
+     *
+     * @param path 要删除的文件或目录路径
+     * @return 如果删除成功返回true，失败时返回false
      */
-    bool isDirectory() { return work_file.isDirectory(); }
+    bool deletePath(const std::string& path) {
+        // 检查路径是否存在
+        if (LittleFS.exists(path.c_str())) {
+            File file = LittleFS.open(path.c_str());
+
+            // 如果是目录，递归删除目录及其内容
+            if (file.isDirectory()) {
+                file.close();                     ///< 关闭文件
+                return deleteDirRecursive(path);  ///< 递归删除目录
+            } else {
+                // 如果是文件，直接删除文件
+                file.close();                          ///< 关闭文件
+                return LittleFS.remove(path.c_str());  ///< 删除文件
+            }
+        }
+
+        WARN(WarningLevel::ERROR, "路径不存在: %s", path.c_str());
+        return false;  ///< 路径不存在，返回false
+    }
+
+    /**
+     * @brief 判断指定路径是否为目录
+     *
+     * 该函数用于判断当前操作的文件是否为目录。如果提供了路径，则判断指定路径是否为目录；
+     * 如果没有提供路径，则判断当前打开的文件是否为目录。
+     *
+     * @param path [in] 要检查的路径，默认为空字符串，表示检查当前工作文件
+     * @return true 如果指定路径或当前工作文件是目录
+     * @return false 如果指定路径或当前工作文件不是目录
+     */
+    bool isDirectory(const std::string& path = "") {
+        if (path == "") {
+            return work_file.isDirectory();  ///< 如果未指定路径，判断当前工作文件是否为目录
+        }
+
+        ///< 如果指定路径，判断该路径是否为目录
+        File file = LittleFS.open(path.c_str());
+        bool result = file.isDirectory();
+        file.close();
+
+        return result;
+    }
 
     /**
      * @brief 获取当前目录下的下一个文件或目录的名称
@@ -313,6 +356,51 @@ class FSInterface {
      * @brief 强制将缓存中的数据写入文件
      */
     void sync() { work_file.flush(); }
+
+   private:
+    /**
+     * @brief 递归删除指定目录及其内容
+     *
+     * 该函数递归遍历指定目录及其子目录中的所有文件，逐个删除文件和目录。最后删除空目录。
+     *
+     * @param dirPath 需要删除的目录路径
+     * @return 如果删除成功返回true，失败时返回false
+     */
+    bool deleteDirRecursive(const std::string& dirPath) {
+        File dir = LittleFS.open(dirPath.c_str());  ///< 打开指定目录
+        if (!dir) {
+            WARN(WarningLevel::ERROR, "无法打开目录: %s", dirPath.c_str());
+            return false;  ///< 目录打开失败，返回false
+        }
+
+        // 遍历目录中的每一个文件或子目录
+        while (true) {
+            File entry = dir.openNextFile();  ///< 获取目录中的下一个文件或子目录
+            if (!entry) {
+                break;  ///< 如果没有更多条目，退出循环
+            }
+
+            std::string filePath = dirPath + "/" + entry.name();  ///< 获取文件或子目录的完整路径
+
+            if (entry.isDirectory()) {
+                // 如果是目录，递归删除该子目录
+                if (!deleteDirRecursive(filePath)) {  ///< 递归删除子目录
+                    entry.close();                    ///< 关闭文件
+                    return false;                     ///< 删除失败，返回false
+                }
+            } else {
+                // 如果是文件，直接删除
+                if (!LittleFS.remove(filePath.c_str())) {  ///< 删除文件
+                    entry.close();                         ///< 关闭文件
+                    return false;                          ///< 删除失败，返回false
+                }
+            }
+            entry.close();  ///< 关闭当前文件或目录
+        }
+
+        // 删除空目录
+        return LittleFS.rmdir(dirPath.c_str());  ///< 删除当前空目录
+    }
 
    private:
     File work_file;  // 当前操作的文件对象

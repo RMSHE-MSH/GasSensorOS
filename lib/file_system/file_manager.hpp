@@ -33,25 +33,20 @@
 class FileManager {
    public:
     /**
-     * @brief 构造函数，初始化并挂载文件系统
-     * 在创建 FileManager 对象时，会自动挂载文件系统。
-     */
-    FileManager() { fs.mount(); }
-
-    /**
-     * @brief 析构函数
-     * 确保在文件管理器析构时卸载文件系统。
-     */
-    ~FileManager() { fs.unmount(); }
-
-    /**
-     * @brief 创建文件
+     * @brief 创建文件(不会自动创建目录)
      * 检查文件是否已存在，如果已存在则返回 false，避免覆盖现有文件。
-     * 否则，创建一个新的空文件。
+     * 否则，创建一个新的空文件。注意,如果尝试在一个不存在的目录下创建文件，函数会返回false，不会自动创建目录。
      * @param filePath 文件路径
      * @return 如果文件创建成功返回 true，否则返回 false
      */
     bool createFile(const std::string& filePath) {
+        // 检查文件名是否合法
+        std::string fileName = getFileName(filePath);
+        if (!isValidFileName(fileName)) {
+            WARN(WarningLevel::ERROR, "文件名包含非法字符: %s", fileName.c_str());
+            return false;  // 如果文件名非法，返回 false
+        }
+
         if (fs.exists(filePath)) {
             WARN(WarningLevel::ERROR, "文件已存在,操作终止: %s", filePath.c_str());
             return false;  // 文件已存在，不创建
@@ -169,7 +164,7 @@ class FileManager {
         if (!fs.open(filePath, "r")) return "";  // 返回空字符串表示文件打开失败
 
         // 根据文件大小动态调整缓冲区大小
-        size_t fileSize = fs.getSize();                // 获取文件大小
+        size_t fileSize = fs.getSize();                        // 获取文件大小
         DynamicBufferManager bufferManager(fileSize);          // 使用 DynamicBufferManager 根据文件大小动态计算缓冲区大小
         size_t bufferSize = bufferManager.getBufferSize();     // 获取计算出来的缓冲区大小
         std::unique_ptr<char[]> buffer(new char[bufferSize]);  // 为缓冲区分配内存
@@ -203,7 +198,7 @@ class FileManager {
         if (!fs.open(filePath, "r")) return {};  // 返回空字节数组表示文件打开失败
 
         // 根据文件大小动态调整缓冲区大小
-        size_t fileSize = fs.getSize();                      // 获取文件大小
+        size_t fileSize = fs.getSize();                              // 获取文件大小
         DynamicBufferManager bufferManager(fileSize);                // 使用 DynamicBufferManager 根据文件大小动态计算缓冲区大小
         size_t bufferSize = bufferManager.getBufferSize();           // 获取计算出来的缓冲区大小
         std::unique_ptr<uint8_t[]> buffer(new uint8_t[bufferSize]);  // 为缓冲区分配内存
@@ -272,7 +267,7 @@ class FileManager {
         return bytesWritten == dataSize;  // 确保写入字节数与数据大小一致
     }
 
-   private:
+   public:
     /**
      * @brief 获取文件路径中的目录部分
      *
@@ -294,7 +289,32 @@ class FileManager {
         return filePath.substr(0, pos);
     }
 
-    // 检查文件名是否合法（不包含非法字符）
+    /**
+     * @brief 获取文件路径中的文件名部分
+     *
+     * 该函数从给定的文件路径中提取出文件名部分。它会查找最后一个路径分隔符（'/' 或 '\\'），
+     * 并返回该分隔符之后的子字符串作为文件名。如果没有找到路径分隔符，函数会返回一个空字符串。
+     * [示例: "/test.txt" -> "test.txt"; "/dir/test.txt" -> "test.txt";]
+     *
+     * @param filePath 输入的完整文件路径
+     * @return 返回文件的文件名部分。如果未找到路径分隔符，返回空字符串。
+     */
+    std::string getFileName(const std::string& filePath) {
+        // 查找最后一个路径分隔符的位置（支持 UNIX 和 Windows 路径格式）
+        size_t pos = filePath.find_last_of("/\\");
+
+        // 如果没有找到路径分隔符，返回空字符串
+        if (pos == std::string::npos) return "";
+
+        // 返回从分隔符后的字符开始的子字符串，作为文件名
+        return filePath.substr(pos + 1);
+    }
+
+    /**
+     * @brief 检查文件名是否合法（不包含非法字符）
+     * @param fileName[in] 完整的文件名（例如 "example.txt"）。
+     * @return 如果文件名合法返回 true，否则返回 false。
+     */
     bool isValidFileName(const std::string& fileName) {
         // 定义常见非法字符
         const std::string invalidChars = "/\\:*?\"<>|";

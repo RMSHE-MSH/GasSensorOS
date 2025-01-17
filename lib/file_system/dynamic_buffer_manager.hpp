@@ -24,6 +24,7 @@
 
 #pragma once
 
+// 在读取文件时用于动态调整合适的内存缓冲区大小；
 class DynamicBufferManager {
    public:
     // 构造函数：根据文件大小初始化缓冲区大小

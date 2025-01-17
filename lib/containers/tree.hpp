@@ -39,6 +39,7 @@ Tree类包含了树的遍历、节点查找、节点删除等方法。其中，�
 #include <algorithm>
 #include <make_ptr.hpp>
 #include <memory>
+#include <queue>
 #include <unordered_map>
 #include <vector>
 

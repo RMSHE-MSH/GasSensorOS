@@ -29,7 +29,8 @@
 | `rename()`          | 重命名或移动文件。                                   | 1. `old_path` (`std::string`)：原文件路径。<br>2. `new_path` (`std::string`)：新文件路径。 | `bool`：`true` 表示操作成功，`false` 表示操作失败。          |
 | `mkdir()`           | 创建空目录。                                         | `path` (`std::string`)：目录路径。                           | `bool`：`true` 表示创建成功，`false` 表示创建失败。          |
 | `rmdir()`           | 删除空目录。                                         | `path` (`std::string`)：目录路径。                           | `bool`：`true` 表示删除成功，`false` 表示删除失败。          |
-| `isDirectory()`     | 判断当前打开的文件是否为目录。                       | 无                                                           | `bool`：`true` 表示是目录，`false` 表示不是目录。            |
+| `deletePath()`      | 递归删除指定路径的文件或目录。                       | `path` (`std::string`)：文件或目录路径。                     | `bool`：`true` 表示删除成功，`false` 表示删除失败。          |
+| `isDirectory()`     | 判断文件是否为目录。                                 | `path` (`std::string`)：文件或目录路径。如果提供了路径，则判断指定路径是否为目录; 如果没有提供路径，则判断当前打开的文件是否为目录。 | `bool`：`true` 表示是目录，`false` 表示不是目录。            |
 | `dirNextName()`     | 获取当前打开目录下的下一个文件或目录的名称。         | 无                                                           | `std::string`：文件或目录名称，若无更多文件，返回空字符串。  |
 | `listFiles()`       | 获取当前打开目录下的所有文件或目录的名称列表。       | 无                                                           | `std::vector<std::string>`：文件或目录名称列表。             |
 | `rewindDirectory()` | 重置目录遍历指针，使其指向目录的开头。               | 无                                                           | 无                                                           |
