@@ -26,6 +26,7 @@
 #include <LittleFS.h>
 
 #include <cstring>
+#include <serial_warning.hpp>
 #include <string>
 #include <vector>
 
@@ -383,15 +384,15 @@ class FSInterface {
             std::string filePath = dirPath + "/" + entry.name();  ///< 获取文件或子目录的完整路径
 
             if (entry.isDirectory()) {
+                entry.close();  ///< 关闭文件
                 // 如果是目录，递归删除该子目录
                 if (!deleteDirRecursive(filePath)) {  ///< 递归删除子目录
-                    entry.close();                    ///< 关闭文件
                     return false;                     ///< 删除失败，返回false
                 }
             } else {
+                entry.close();  ///< 关闭文件
                 // 如果是文件，直接删除
                 if (!LittleFS.remove(filePath.c_str())) {  ///< 删除文件
-                    entry.close();                         ///< 关闭文件
                     return false;                          ///< 删除失败，返回false
                 }
             }

@@ -27,6 +27,7 @@
 #include <cctype>
 #include <dynamic_buffer_manager.hpp>
 #include <fs_Interface.hpp>
+#include <serial_warning.hpp>
 #include <string>
 #include <vector>
 
@@ -111,12 +112,21 @@ class FileManager {
             return false;
         }
 
+        // 创建目标文件
+        if (!createFile(targetFilePath)) {
+            WARN(WarningLevel::ERROR, "无法复制文件,目标文件创建失败: %s", targetFilePath.c_str());
+            return false;
+        }
+
         // 读取源文件内容为字节数组
-        std::vector<uint8_t> sourceData = readFileAsBytes(sourceFilePath);
-        if (sourceData.empty()) {
+        std::vector<uint8_t> sourceData;
+        if (!readFileAsBytes(sourceFilePath, sourceData)) {
             WARN(WarningLevel::ERROR, "无法复制文件,读取源文件时出错: %s", sourceFilePath.c_str());
             return false;
         }
+
+        // 若源文件内容为空,则不写入文件.
+        if (sourceData.empty()) return true;
 
         // 将字节数组写入目标文件
         if (!writeFileAsBytes(targetFilePath, sourceData, "w")) {
@@ -149,19 +159,20 @@ class FileManager {
 
     /**
      * @brief 读取文件内容为字符串
-     * 该函数读取文件内容并返回一个字符串。如果文件不存在或读取失败，则返回空字符串。
-     * @param filePath 文件路径
-     * @return 返回文件内容字符串，失败时返回空字符串
+     * 该函数读取文件内容并返回一个字符串。
+     * @param filePath[in] 文件路径
+     * @param fileData[out] 返回文件内容
+     * @return 成功返回 true, 失败时返回 false
      */
-    std::string readFileAsString(const std::string& filePath) {
+    bool readFileAsString(const std::string& filePath, std::string& fileData) {
         // 检查文件是否存在
         if (!fs.exists(filePath)) {
             WARN(WarningLevel::ERROR, "文件不存在: %s", filePath.c_str());
-            return "";  // 文件不存在，返回空字符串表示读取失败
+            return false;  // 文件不存在
         }
 
         // 尝试打开文件
-        if (!fs.open(filePath, "r")) return "";  // 返回空字符串表示文件打开失败
+        if (!fs.open(filePath, "r")) return false;  // 返回空字符串表示文件打开失败
 
         // 根据文件大小动态调整缓冲区大小
         size_t fileSize = fs.getSize();                        // 获取文件大小
@@ -170,32 +181,32 @@ class FileManager {
         std::unique_ptr<char[]> buffer(new char[bufferSize]);  // 为缓冲区分配内存
 
         size_t bytesRead = 0;
-        std::string result;  // 结果字符串，用于存储读取到的文件内容
         // 持续读取文件内容，直到文件结束
         while ((bytesRead = fs.read(buffer.get(), bufferSize)) > 0) {
-            result.append(buffer.get(), bytesRead);  // 将读取到的数据追加到结果字符串
+            fileData.append(buffer.get(), bytesRead);  // 将读取到的数据追加到结果字符串
         }
 
         fs.close();  // 关闭文件
 
-        return result;
+        return true;
     }
 
     /**
      * @brief 读取文件内容为字节数组
-     * 该函数读取文件内容并返回一个字节数组。如果文件不存在或读取失败，则返回空字节数组。
-     * @param filePath 文件路径
-     * @return 返回文件内容字节数组，失败时返回空字节数组
+     * 该函数读取文件内容并返回一个字节数组。
+     * @param filePath[in] 文件路径
+     * @param fileData[out] 返回文件内容
+     * @return 成功返回 true, 失败时返回 false
      */
-    std::vector<uint8_t> readFileAsBytes(const std::string& filePath) {
+    bool readFileAsBytes(const std::string& filePath, std::vector<uint8_t>& fileData) {
         // 检查文件是否存在
         if (!fs.exists(filePath)) {
             WARN(WarningLevel::ERROR, "文件不存在: %s", filePath.c_str());
-            return {};  // 文件不存在，返回空字节数组表示读取失败
+            return false;  // 文件不存在
         }
 
         // 尝试打开文件
-        if (!fs.open(filePath, "r")) return {};  // 返回空字节数组表示文件打开失败
+        if (!fs.open(filePath, "r")) return false;  // 返回空字节数组表示文件打开失败
 
         // 根据文件大小动态调整缓冲区大小
         size_t fileSize = fs.getSize();                              // 获取文件大小
@@ -204,15 +215,14 @@ class FileManager {
         std::unique_ptr<uint8_t[]> buffer(new uint8_t[bufferSize]);  // 为缓冲区分配内存
 
         size_t bytesRead = 0;
-        std::vector<uint8_t> result;  // 结果容器，存储读取到的文件内容
         // 持续读取文件内容，直到文件结束
         while ((bytesRead = fs.read(buffer.get(), bufferSize)) > 0) {
-            result.insert(result.end(), buffer.get(), buffer.get() + bytesRead);  // 将读取到的数据追加到字节数组
+            fileData.insert(fileData.end(), buffer.get(), buffer.get() + bytesRead);  // 将读取到的数据追加到字节数组
         }
 
         fs.close();  // 关闭文件
 
-        return result;
+        return true;
     }
 
     /**

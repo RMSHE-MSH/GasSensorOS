@@ -1,10 +1,12 @@
 /**
  * @file data_table.hpp
- * @date 05.08.2024
+ * @date Upgrade1.05.08.2024
+ * @date 21.01.2025
  * @author RMSHE
  *
  * < GasSensorOS >
- * Copyright(C) 2023 RMSHE. All rights reserved.
+ * Copyright(C) 2024 RMSHE. All rights reserved.
+ * Copyright(C) 2025 RMSHE. All rights reserved.
  *
  * This program is free software : you can redistribute it and /or modify
  * it under the terms of the GNU Affero General Public License as
@@ -25,9 +27,14 @@
 #pragma once
 
 #include <algorithm>
+#include <file_explorer.hpp>
+#include <fstream>
 #include <iostream>
+#include <serial_warning.hpp>
+#include <sstream>
 #include <stdexcept>
 #include <string>
+#include <string_edit.hpp>
 #include <vector>
 
 class DataTable {
@@ -67,7 +74,7 @@ class DataTable {
     void replaceRow(const Row& values, size_t row) {
         if (!checkRowBounds(row)) return;  // 检查行索引是否越界
 
-        size_t row_size = getRowSize();
+        size_t row_size = getColSize();
 
         // 创建一个与表格行长度匹配的行数据
         Row newRow(row_size, "");
@@ -87,7 +94,7 @@ class DataTable {
     void replaceCol(const std::vector<std::string>& values, size_t col) {
         if (!checkColBounds(col)) return;  // 检查列索引是否越界
 
-        size_t col_size = getColSize();
+        size_t col_size = getRowSize();
 
         // 创建一个与表格行数匹配的新列数据
         std::vector<std::string> newCol(col_size, "");
@@ -379,9 +386,79 @@ class DataTable {
     }
 
     /**
+     * @brief 获取表格的字符串表示
+     *
+     * 该函数将表格的数据（行和列）转化为一个字符串表示，包含自动调整的边框。
+     * 边框的长度会根据表格内容的最大列宽进行动态调整，确保表格显示整齐。
+     * 每列之间用逗号和制表符分隔，表格的边框由`----`构成。表格的表头和数据行使用不同的边框样式区分。
+     *
+     * @return 返回表格的字符串表示，包含数据和边框。
+     */
+    std::string getTableString() {
+        // 1. 计算每一列的最大长度（列宽）
+        std::vector<size_t> colWidths(getColSize(), 0);  // 存储每列的最大宽度
+        for (const auto& row : data) {
+            for (size_t col = 0; col < row.size(); ++col) {
+                // 更新当前列的最大宽度
+                colWidths[col] = std::max(colWidths[col], row[col].size());
+            }
+        }
+
+        // 2. 构造表格的边框（表头与数据行的分隔线）
+        std::string border = "+";
+        for (size_t i = 0; i < getColSize(); ++i) {
+            border += std::string(colWidths[i] + 2, '-');  // 每列的边框宽度 = 最大列宽 + 2
+            border += "+";
+        }
+        border += "\n";
+
+        // 3. 使用 StringStream 来构建表格字符串
+        std::stringstream table_str;
+        table_str << border;  // 添加上边框
+
+        // 4. 表头和数据行的分隔符不同，因此需要区分处理
+        bool isFirstRow = true;  // 标记是否是表头行
+
+        for (const auto& row : data) {
+            table_str << "|";  // 每行的开始
+
+            // 5. 遍历每一列，按列宽格式化内容
+            for (size_t col = 0; col < row.size(); ++col) {
+                // 如果是表头行，列内容右对齐，其他行内容左对齐
+                if (isFirstRow) {
+                    table_str << " " << row[col] << std::string(colWidths[col] - row[col].size(), ' ') << " |";
+                } else {
+                    table_str << " " << row[col] << std::string(colWidths[col] - row[col].size(), ' ') << " |";
+                }
+            }
+
+            table_str << "\n";  // 每行末尾添加换行符
+
+            // 6. 添加表头和数据行的分隔线
+            if (isFirstRow) {
+                table_str << "+";
+                for (size_t i = 0; i < getColSize(); ++i) {
+                    table_str << std::string(colWidths[i] + 2, '-') << "+";
+                }
+                table_str << "\n";
+                isFirstRow = false;  // 表头已处理，标记为非表头行
+            }
+        }
+
+        // 7. 添加下边框
+        table_str << border;
+
+        // 8. 返回生成的表格字符串
+        return table_str.str();
+    }
+
+    /**
      * @brief 从串口打印整个数据表
      */
-    void printTable() const {
+    void printTable() {
+        Serial.println(getTableString().c_str());
+
+        /*
         for (const auto& row : data) {
             for (const auto& col : row) {
                 Serial.print(col.c_str());
@@ -389,6 +466,7 @@ class DataTable {
             }
             Serial.print("\n");
         }
+        */
     }
 
     /**
@@ -461,8 +539,103 @@ class DataTable {
         data.shrink_to_fit();  // 释放内存
     }
 
+    /**
+     * @brief 保存DataTable到指定路径的CSV文件
+     *
+     * 该函数将 `DataTable` 的内容保存为 CSV 格式文件。支持两种文件操作模式：覆写模式("w")和追加模式("a")。
+     * - 在覆写模式下，会创建一个新的文件，且如果文件已存在则不会覆盖写入，避免误删除数据。
+     * - 在追加模式下，会在文件末尾追加数据。
+     *
+     * @param filePath 要保存的文件路径
+     * @param mode 文件打开模式，支持"w"（覆写）和"a"（追加），默认为"w"
+     */
+    void saveTable(const std::string& filePath, const char* mode = "w") {
+        size_t rows = getRowSize();  ///< 获取表格的行数
+        size_t cols = getColSize();  ///< 获取表格的列数
+
+        // 文件操作模式检查
+        if (mode != "w" && mode != "a") {
+            WARN(WarningLevel::ERROR, "文件打开模式非法，仅支持(w:覆写, a:追加): %s", mode);
+            return;
+        }
+
+        // 根据模式选择文件操作方式
+        if (mode == "w") {
+            // 在覆写模式下，创建新文件
+            if (!file.createFile(filePath)) {
+                WARN(WarningLevel::ERROR, "DataTable文件创建失败: %s", filePath.c_str());
+                return;
+            }
+        } else if (mode == "a") {
+            // 在追加模式下，检查文件是否存在
+            if (!file.exists(filePath)) {
+                WARN(WarningLevel::ERROR, "DataTable文件不存在,无法追加数据: %s", filePath.c_str());
+                return;
+            }
+        }
+
+        // 使用ostringstream高效拼接数据
+        std::ostringstream tableBuffer;
+        for (size_t row = 0; row < rows; ++row) {
+            // 遍历每一列，拼接每一行的数据
+            for (size_t col = 0; col < cols; ++col) {
+                tableBuffer << getCell(row, col);        ///< 获取当前单元格的内容
+                if (col < cols - 1) tableBuffer << ",";  ///< 每个单元格之间用逗号分隔
+            }
+            tableBuffer << "\n";  ///< 每一行结束后添加换行符
+        }
+
+        // 写入数据到文件
+        if (!file.writeFileAsString(filePath, tableBuffer.str(), mode)) {
+            WARN(WarningLevel::ERROR, "DataTable文件写入失败: %s", filePath.c_str());
+            return;
+        }
+    }
+
+    /**
+     * @brief 从指定 CSV 格式文件加载表格数据并覆写到当前表格中
+     *
+     * 本函数会读取指定路径的文件内容，并按行和列将数据填充到当前表格中。初始表格将被清空并重新调整为适当的大小。
+     * 文件中每一行数据以换行符分隔，列数据以逗号分隔。最后会删除第一行（通常用于标题）。
+     *
+     * @param filePath 文件路径，指向包含表格数据的文本文件
+     */
+    void loadTable(const std::string& filePath) {
+        // 读取CSV文件内容到字符串
+        std::string table_buffer_str = file.readFileAsString(filePath);
+
+        // 获取CSV数据的最大行数和列数
+        size_t maxRows = 0, maxCols = 0;
+        getCSVDimensions(table_buffer_str, maxRows, maxCols);
+
+        // 清空现有数据并调整表格大小
+        clear();
+        resize(maxRows, maxCols);
+
+        // 用于逐行读取CSV数据
+        std::istringstream stream(table_buffer_str);
+        std::string line;
+        size_t row_index = 0;
+
+        // 逐行解析CSV数据
+        while (std::getline(stream, line)) {
+            std::istringstream lineStream(line);  // 按逗号分隔每一行
+            std::string cell;
+            std::vector<std::string> row_data;
+
+            // 按逗号分隔每一列，并将其加入到当前行中
+            while (std::getline(lineStream, cell, ',')) row_data.push_back(cell);
+
+            // 将解析后的行数据添加到表格中
+            replaceRow(row_data, row_index);
+            ++row_index;
+        }
+    }
+
    private:
     Table data;
+    FileExplorer file;
+    StringSplitter splitter;
 
     // 边界检查: 检查给定的行列索引是否在表格的有效范围内(有效则返回true)
     bool checkBounds(size_t row, size_t col) const {
@@ -480,5 +653,38 @@ class DataTable {
     bool checkColBounds(size_t col) const {
         if (col >= data[0].size()) return false;
         return true;
+    }
+
+    /**
+     * @brief 获取CSV数据的最大行数和最大列数。
+     * @param[in] csvData 要解析的CSV格式数据，按行分隔，用逗号分隔列。
+     * @param[out] maxRows 返回最大行数。
+     * @param[out] maxCols 返回最大列数。
+     */
+    void getCSVDimensions(const std::string& csvData, size_t& maxRows, size_t& maxCols) {
+        // 用于逐行读取CSV数据
+        std::istringstream stream(csvData);
+        std::string line;
+
+        // 初始化行数和列数
+        maxRows = 0;
+        maxCols = 0;
+
+        // 逐行读取CSV数据
+        while (std::getline(stream, line)) {
+            maxRows++;  ///< 每读取一行，行数加1
+
+            size_t colCount = 0;  ///< 当前行的列数
+
+            // 直接使用std::getline按逗号分隔列，避免不必要的内存分配
+            std::istringstream lineStream(line);  ///< 用于分隔每一行的字段
+            std::string cell;
+
+            // 按逗号分隔每一列，统计当前行的列数
+            while (std::getline(lineStream, cell, ',')) colCount++;
+
+            // 更新最大列数
+            maxCols = std::max(maxCols, colCount);
+        }
     }
 };

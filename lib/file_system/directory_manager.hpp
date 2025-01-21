@@ -25,6 +25,7 @@
 #pragma once
 #include <file_manager.hpp>
 #include <fs_interface.hpp>
+#include <serial_warning.hpp>
 #include <string>
 #include <string_edit.hpp>
 
@@ -42,7 +43,6 @@ class DirectoryManager {
      */
     bool createDir(const std::string& dirPath) {
         // 使用分隔符“/”分割目录路径
-        splitter.ignoreEmpty(false);
         std::vector<std::string> dir_names = splitter.split(dirPath, {"/"});
 
         std::string base_path = "";  // 当前目录路径初始化为空
@@ -55,7 +55,7 @@ class DirectoryManager {
                 return false;  // 如果有非法目录名，则返回false
             }
 
-            base_path += ("/" + dir_name);  // 拼接当前目录路径
+            base_path = base_path + "/" + dir_name;  // 拼接当前目录路径
 
             // 如果当前目录不存在，则创建该目录
             if (!fs.exists(base_path)) {
@@ -68,6 +68,61 @@ class DirectoryManager {
 
         // 所有目录创建成功，返回true
         return true;
+    }
+
+    /**
+     * @brief 递归复制目录及其内容
+     *
+     * @param sourceDirPath 源目录路径
+     * @param targetDirPath 目标目录路径
+     * @return bool 复制成功返回true，失败返回false
+     *
+     * @details 该函数会递归复制源目录中的所有文件和子目录到目标目录。
+     *          如果目标目录是源目录的子目录，函数将避免进行复制操作。
+     *          函数内部会进行路径检查和创建目录操作，并在复制过程中保持源目录结构。
+     *          复制文件时，会调用`copyFile`方法复制单个文件。
+     */
+    bool copyDir(const std::string& sourceDirPath, const std::string& targetDirPath) {
+        // 检查源目录是否存在
+        if (!fs.exists(sourceDirPath)) {
+            WARN(WarningLevel::ERROR, "源目录不存在: %s", sourceDirPath.c_str());
+            return false;
+        }
+
+        // 检查目标目录是否是源目录的子目录，避免死循环
+        if (targetDirPath.find(sourceDirPath) == 0) {
+            WARN(WarningLevel::ERROR, "目标目录是源目录的子目录，无法复制: %s -> %s", sourceDirPath.c_str(), targetDirPath.c_str());
+            return false;
+        }
+
+        // 创建目标目录，如果目录创建失败，则返回错误
+        if (!createDir(targetDirPath)) {
+            WARN(WarningLevel::ERROR, "创建目标目录失败: %s", targetDirPath.c_str());
+            return false;
+        }
+
+        // 获取源目录中的文件和子目录列表
+        std::vector<std::string> items = listDir(sourceDirPath);
+        for (const auto& item : items) {
+            // 拼接源目录和目标目录的完整路径
+            std::string sourceItem = sourceDirPath + "/" + item;
+            std::string targetItem = targetDirPath + "/" + item;
+
+            // 判断是文件还是目录
+            if (fs.isDirectory(sourceItem)) {
+                // 递归复制子目录
+                if (!copyDir(sourceItem, targetItem)) {
+                    return false;  // 如果复制子目录失败，直接返回错误
+                }
+            } else {
+                // 复制文件
+                if (!file.copyFile(sourceItem, targetItem)) {
+                    return false;  // 如果复制文件失败，直接返回错误
+                }
+            }
+        }
+
+        return true;  // 所有文件和子目录复制成功
     }
 
     /**
@@ -226,4 +281,5 @@ class DirectoryManager {
     StringSplitter splitter;
 
     FSInterface fs;  // 底层文件系统接口实例
+    FileManager file;
 };

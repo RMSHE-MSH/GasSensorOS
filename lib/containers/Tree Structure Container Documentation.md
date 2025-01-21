@@ -299,9 +299,9 @@ ROOT
 
 # `findDescendant`
 
-在当前节点的后裔中查找节点. <br/>*Find a node among the descendants of the current node.*
+在当前节点的后裔中查找所有与指定数据匹配的节点。<br/>*Find all nodes that match the specified data among the descendants of the current node.*
 ```c++
-TreeNode<T>* parent_node_ptr->TreeNode<T>* findDescendant(const T& target_node_data);
+TreeNode<T>* parent_node_ptr->std::vector<TreeNode<T>*> findDescendants(const T& target_node_data);
 ```
 ## 参数 - Parameters
 
@@ -315,15 +315,15 @@ TreeNode<T>* parent_node_ptr->TreeNode<T>* findDescendant(const T& target_node_d
 
 ## 返回值 - Return value
 
-返回指向查找到的节点的指针，如果未找到则返回 `nullptr`.<br/>*Returns a pointer to the found node, or `nullptr` if it is not found.*
+返回一个包含所有匹配节点指针的 `std::vector` 容器。如果未找到任何匹配的节点，则返回空容器。<br/>*Returns a `std::vector` containing all the matching node pointers. If no matching nodes are found, an empty container is returned.*
 
 ## 注解 - Remarks
 
-这是一个在树结构中查找指定节点的方法，方法使用深度优先遍历，递归地在当前节点的子节点中查找指定数据，直到找到该数据或者遍历完整棵树。如果找到指定数据的节点，则返回该节点的指针；如果未找到，则返回 `nullptr`. (`findDescendant`与`findChild`的不同之处在于: `findChild`的查找范围为父节点的所有孩子, 而`findDescendant`的查找范围为父节点之后的所有节点.)
+该方法在当前节点及其所有后裔中查找所有与指定数据值匹配的节点。它采用深度优先的递归遍历方法，查找整个树结构中的所有节点，并返回所有匹配的节点指针。`findDescendants` 会返回多个匹配的节点指针，因为树中可能有多个节点的数据值相同。在遍历过程中，方法会递归地访问每一个子节点及其后裔节点，并将所有找到的匹配节点添加到返回结果中。
 
 
 
-*This is a method to find a specified node in a tree structure. The method uses a depth-first traversal to recursively find the specified data in the children of the current node until the data is found or the entire tree is traversed. If the node with the specified data is found, it returns a pointer to that node; if not, it returns `nullptr`.* *(The difference between `findDescendant` and `findChild` is that `findChild` looks for all children of the parent node, while `findDescendant` looks for all nodes after the parent node.)*
+This method finds all nodes that match the specified data value among the current node and its descendants. It uses a depth-first recursive traversal to search the entire tree structure and returns all matching node pointers. `findDescendants` returns multiple matching nodes, as there may be more than one node with the same data value in the tree. During the traversal, it recursively visits every child node and its descendants, adding all the found matching nodes to the result.
 
 ## 示例 - Example
 
@@ -332,25 +332,30 @@ TreeNode<T>* parent_node_ptr->TreeNode<T>* findDescendant(const T& target_node_d
 #include <string>
 
 void setup() {
-	Tree<std::string> tree("ROOT");
-    
+    Tree<std::string> tree("ROOT");
+
     tree.root->addChild("node_1")->addChild("node_1_1")->addChild("node_1_1_1");
-    
-    // 在根节点的后裔中查找并获取指向值为"node_1_1_1"的节点的指针.
-    // Find and get a pointer to the node with the value "node_1_1_1" among the descendants of the root node.
-    auto* node_1_1_1_ptr = tree.root->findDescendant("node_1_1_1");
-    
-    node_1_1_1_ptr->addChild("node_1_1_1_1");
-    node_1_1_1_ptr->addChild("node_1_1_1_2");
+    tree.root->addChild("node_1_1");
+
+    // 在根节点的后裔中查找并获取指向值为"node_1_1"的节点的指针.
+    // Find and get a pointer to the node with the value "node_1_1" among the descendants of the root node.
+    std::vector<TreeNode<std::string>*> found_nodes = tree.root->findDescendants("node_1_1");
+
+    // 处理找到的节点
+    // Process the found nodes
+    for (auto* node_1_1_ptr : found_nodes) {
+        node_1_1_ptr->addChild("node_1_1_add");
+    }
 }
 ```
 ```c++
 ROOT
 |--node_1
-   |--node_1_1
-      |-node_1_1_1
-         |-node_1_1_1_1
-         |-node_1_1_1_2
+|  |--node_1_1
+|     |-node_1_1_1
+|     |-node_1_1_add
+|--node_1_1
+   |--node_1_1_add
 ```
 
 ---
@@ -771,33 +776,31 @@ node_1_1_1
 ---
 # `findNode`
 
-在树中查找节点. <br/>*Find nodes in the tree.*
+从树的根节点开始查找节点，并返回所有匹配的节点。<br/>*Find nodes starting from the root node of the tree and return all matching nodes.*
 
 
 ```c++
-TreeNode<T>* findNode(const T& target_node_data);
+std::vector<TreeNode<T>*> findNode(const T& target_node_data);
 ```
 ## 参数 - Parameters
 
 `target_node_data`
 
-要查找的节点的值. (本方法会在树中查找该值, 如果找到就返回指向拥有该值的节点的指针).<br/>*The value of the node to look for. (This method looks for the value in the tree and returns a pointer to the node that has the value if it is found).*
+要查找的节点的值。该方法会在树中查找该值，如果找到匹配的节点，则返回指向这些节点的指针容器。<br/>
+*The value of the node to look for. This method searches the tree for the value, and returns a container of pointers to the matching nodes if found.*
 
 ## 返回值 - Return value
 
-返回指向查找到的节点的指针，如果未找到则返回 `nullptr`.<br/>*Returns a pointer to the found node, or `nullptr` if it is not found.*
+返回一个 `std::vector<TreeNode<T>*>` 类型的容器，包含所有匹配节点的指针。如果没有找到匹配的节点，则返回一个空容器。<br/>
+*Returns a `std::vector<TreeNode<T>\*>` containing pointers to all matching nodes. If no matching nodes are found, an empty container is returned.*
 
 ## 注解 - Remarks
 
-本方法定义了一个查找目标节点的函数 `findNode`，它的输入参数是目标节点的值 `target_node_data`，返回类型是指向节点的指针 `TreeNode<T>*`。在函数中，首先调用根节点的 `findDescendant` 函数在根节点的子节点中查找目标节点，如果查找成功，则直接返回该节点的指针。如果查找失败，则通过比较根节点的数据和目标节点的数据来判断是否为根节点，如果是，则返回根节点的指针，否则返回空指针。
-
-该函数的实现是基于一个假设：在查找范围内（不包括根节点）只有一个节点具有目标数据。如果查找范围内有多个节点具有目标数据，则该函数只会返回其中一个节点的指针，而不是所有节点的指针。
+此方法从树的根节点开始查找指定的数据值。它调用根节点的 `findDescendants` 方法来查找树中所有后裔节点，并返回匹配数据的所有节点指针。如果根节点的数据本身与目标数据匹配，根节点也会被包含在返回的结果中
 
 
 
-*This method defines a function `findNode` to search for a target node in a tree. The input parameter of this function is the value of the target node `target_node_data`, and the return type is a pointer to the node `TreeNode<T>*`. In the function, it first calls the `findDescendant` function of the root node to search for the target node in the children of the root node. If the search is successful, it directly returns the pointer to that node. If the search fails, it determines whether it is the root node by comparing the data of the root node and the data of the target node. If it is, it returns the pointer to the root node. Otherwise, it returns a null pointer.*
-
-*The implementation of this function is based on the assumption that only one node in the search range (excluding the root node) has the target data. If there are multiple nodes with the target data in the search range, the function will only return the pointer to one of them, not all of them.*
+This method starts from the root node of the tree and searches for nodes with the specified data value. It calls the findDescendants method of the root node to search all descendant nodes in the tree and returns pointers to all matching nodes. If the root node itself matches the target data, it will also be included in the returned result.
 
 ## 示例 - Example
 
@@ -806,22 +809,30 @@ TreeNode<T>* findNode(const T& target_node_data);
 #include <string>
 
 void setup() {
-	Tree<std::string> tree("ROOT");
-    
-    tree.root->addChild("node_1")->addChild("node_1_1");
-    
-    // 在树中查找值为"node_1_1"的节点.
-    // Find the node with the value "node_1_1" in the tree.
-    auto node_1_1_ptr = tree.findNode("node_1_1");
-    
-    node_1_1_ptr->addChild("node_1_1_1");
+    Tree<std::string> tree("ROOT");
+
+    tree.root->addChild("node_1")->addChild("node_1_1")->addChild("node_1_1_1");
+    tree.root->addChild("node_1_1");
+
+    // 在整颗树中查找所有值为"node_1_1"的节点
+    // Find all nodes with value "node_1_1" in the entire tree
+    std::vector<TreeNode<std::string>*> found_nodes = tree.findNode("node_1_1");
+
+    // 处理找到的节点
+    // Process the found nodes
+    for (auto* node_1_1_ptr : found_nodes) {
+        node_1_1_ptr->addChild("node_1_1_add");
+    }
 }
 ```
 ```c++
 ROOT
 |--node_1
-   |--node_1_1
-      |--node_1_1_1
+|  |--node_1_1
+|     |-node_1_1_1
+|     |-node_1_1_add
+|--node_1_1
+   |--node_1_1_add
 ```
 
 ---

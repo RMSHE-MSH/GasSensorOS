@@ -1,10 +1,15 @@
 #include <command_line_interface.h>
 
+#include <data_table.hpp>
 #include <file_explorer.hpp>
+#include <fs_interface.hpp>
+#include <tree_tool.hpp>
 
 Command_Line_Interface CLI;
 StringSplitter splitter;
 FileExplorer fe;
+FileManager file;
+FSInterface fs1;
 TreeTool tree_tool;
 
 /*
@@ -70,37 +75,25 @@ void setup() {
     Serial.begin(115200);
     delay(4000);
 
-    // 创建树并添加节点
-    Tree<std::string> tree("ROOT");
-    tree.root->addChild("node_1")->addChild("node_1_1")->addChild("node_1_1_1");
-    tree.root->addChild("node_2")->addChild("node_2_1");
+    fe.deletePath("/");
 
-    // 获取 `node_1` 节点下的树的结构字符串
-    std::string tree_str = tree_tool.getTreeString(tree.findNode("node_1"));
-    Serial.println(tree_str.c_str());
+    DataTable table(7, 13, "*");
+    table.replaceRow({"", "", "", "", "", "", "", "", "", "", "", ""}, 8);
+    table.replaceRow({"A", "B", "C", "D", "E", "F"}, 0);
 
-    /*
-    fe.createFile("/.os/create_file/test1.txt");
-    fe.createFile("/.os/create_file/test2.txt");
-    fe.createFile("/.os/create_file2/test3.txt");
+    table.printTable();
+    table.saveTable("/.os/table.csv");
+    // Serial.println(fe.readFileAsString("/.os/table.csv").c_str());
+
+    fe.createFile("/.os/dir1/test1.txt");
+    fe.createFile("/.os/dir2/test2.txt");
+    fe.createFile("/.os/dir3/test3.txt");
 
     fe.printTree();
-    */
 
-    /*
-        // 创建文件并写入字符串数据
-        fm.writeFileAsString("/test.txt", "Hello, ESP32 FileManager!");
-
-        // 读取文件作为字符串
-        std::string text = fm.readFileAsString("/test.txt");
-        Serial.println(text.c_str());  // 输出：Hello, ESP32 FileManager!
-
-        // 读取文件作为字节数组
-        std::vector<uint8_t> byteData = fm.readFileAsBytes("/test.txt");
-        for (uint8_t byte : byteData) {
-            Serial.printf("%c", byte);
-        }
-     */
+    DataTable table_load(1, 1, "");
+    table_load.loadTable("/.os/table.csv");
+    table_load.printTable();
 }
 
 void loop() { CLI.run(); }
