@@ -10,7 +10,11 @@
 #include <unordered_set>
 #include <vector>
 
-StringSimilarityEvaluator::StringSimilarityEvaluator(const std::string &str1, const std::string &str2) : str1(str1), str2(str2) {}
+// 更新待评估的字符串
+void StringSimilarityEvaluator::replaceString(const std::string &strA, const std::string &strB) {
+    str1 = strA;
+    str2 = strB;
+}
 
 // 综合评估两个字符串相似度
 float StringSimilarityEvaluator::evaluateStringSimilarity() {

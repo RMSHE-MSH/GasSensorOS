@@ -58,8 +58,7 @@ class TreeTool {
             result += getTreeString(node->children[i].get(), newPrefix, i == numChildren - 1);  ///< 递归调用，拼接子节点的树结构字符串
         }
 
-        return result;  // 返回构建好的树结构字符串 
-        
+        return result;  // 返回构建好的树结构字符串
     }
 
     /**
@@ -74,5 +73,29 @@ class TreeTool {
     template <typename T>
     std::string getTreeString(const Tree<T>& tree) {
         return getTreeString(tree.root.get());  ///< 从树的根节点开始生成树结构字符串
+    }
+
+    /**
+     * @brief 获取指定节点的完整路径
+     *
+     * @tparam T 节点数据类型
+     * @param node 指向目标节点的指针
+     * @return std::string 完整路径字符串
+     *
+     * @note 此函数从目标节点开始，逐级向上追溯父节点，
+     *       拼接各节点数据构建完整路径，直到根节点为止。
+     */
+    template <typename T>
+    std::string getPath(TreeNode<T>* node) {
+        std::string found_path = node->node_data;  // 初始化路径
+
+        // 从目标节点向上遍历到根节点，构建完整路径
+        while (node->parent != nullptr) {
+            node = node->parent;                              // 移动到父节点
+            found_path = node->node_data + "/" + found_path;  // 拼接当前节点和路径
+        }
+
+        // 返回找到的完整路径
+        return found_path;
     }
 };

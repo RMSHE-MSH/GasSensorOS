@@ -8,7 +8,7 @@
 
 ## 类方法
 
-###  ①
+###  ① 获取树结构字符串（从指定节点）
 
 ```c++
 std::string getTreeString(TreeNode<T>* node, const std::string& prefix = "", bool isLast = false)
@@ -24,7 +24,7 @@ std::string getTreeString(TreeNode<T>* node, const std::string& prefix = "", boo
 **返回值：**
 - 返回从指定节点开始的树结构字符串。
 
-### ②
+### ② 获取整棵树的结构字符串
 
 ```c++
 std::string getTreeString(const Tree<T>& tree)
@@ -40,11 +40,25 @@ std::string getTreeString(const Tree<T>& tree)
 
 - 返回整个树的结构字符串。
 
+### ③ 获取节点完整路径
+
+```c++
+std::string getPath(TreeNode<T>* node)
+```
+
+获取指定节点的完整路径。
+
+**参数：**
+
+- `node`：指向目标节点的指针。
+
+**返回值：**
+
+- 返回目标节点的完整路径字符串。
+
 ---
 
 ## 使用示例
-
-### 示例 1：获取整颗树的结构字符串
 
 假设你已经有一个树结构：
 
@@ -62,6 +76,8 @@ ROOT
 |--node_2
    |--node_2_1
 ```
+
+### 示例 1：获取整颗树的结构字符串
 
 你可以使用 `TreeTool` 获取整颗树的结构字符串：
 
@@ -128,6 +144,42 @@ void setup() {
 ├─node_1
 │ └─node_1_1
 │   └─node_1_1_1
+```
+
+### 示例 3：获取节点完整路径
+
+你可以使用 `TreeTool` 获取整颗树的结构字符串：
+
+```cpp
+#include <tree.hpp>
+#include <tree_tool.hpp>
+
+TreeTool tree_tool;
+
+void setup() {
+    Serial.begin(115200);
+    delay(4000);
+
+    // 创建树并添加节点
+    Tree<std::string> tree("ROOT");
+    tree.root->addChild("node_1")->addChild("node_1_1")->addChild("node_1_1_1");
+    tree.root->addChild("node_2")->addChild("node_2_1");
+
+    // 获取指向节点 "node_1_1_1" 的指针
+    std::vector<TreeNode<std::string>*> found_target_nodes = tree.findNode("node_1_1_1");
+    TreeNode<std::string>* node_ptr = found_target_nodes[0];
+
+    // 获取节点 "node_1_1_1" 的路径
+    std::string found_path = tree_tool.getPath(node_ptr);
+
+    Serial.println(found_path.c_str());
+}
+```
+
+**输出结果：**
+
+```cpp
+ROOT/node_1/node_1_1/node_1_1_1
 ```
 
 ---

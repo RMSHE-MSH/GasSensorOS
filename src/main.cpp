@@ -1,4 +1,5 @@
 #include <command_line_interface.h>
+#include <sqlite3.h>
 
 #include <data_table.hpp>
 #include <file_explorer.hpp>
@@ -6,10 +7,7 @@
 #include <tree_tool.hpp>
 
 Command_Line_Interface CLI;
-StringSplitter splitter;
-FileExplorer fe;
-FileManager file;
-FSInterface fs1;
+FileExplorer file;
 TreeTool tree_tool;
 
 /*
@@ -75,25 +73,16 @@ void setup() {
     Serial.begin(115200);
     delay(4000);
 
-    fe.deletePath("/");
+    file.deletePath("/");
+    file.createFile("/.os/dir1/test.txt");
+    file.createFile("/.os/dir2/test.txt");
+    file.createFile("/.os/dir3/test.txt");
 
-    DataTable table(7, 13, "*");
-    table.replaceRow({"", "", "", "", "", "", "", "", "", "", "", ""}, 8);
-    table.replaceRow({"A", "B", "C", "D", "E", "F"}, 0);
+    file.printTree();
 
-    table.printTable();
-    table.saveTable("/.os/table.csv");
-    // Serial.println(fe.readFileAsString("/.os/table.csv").c_str());
+    for (auto& i : file.searchPath("txt")) Serial.println(i.c_str());
 
-    fe.createFile("/.os/dir1/test1.txt");
-    fe.createFile("/.os/dir2/test2.txt");
-    fe.createFile("/.os/dir3/test3.txt");
-
-    fe.printTree();
-
-    DataTable table_load(1, 1, "");
-    table_load.loadTable("/.os/table.csv");
-    table_load.printTable();
+    printf("[end] -> free_heap_size = %d\n", esp_get_free_heap_size());
 }
 
 void loop() { CLI.run(); }

@@ -13,7 +13,8 @@ class StringSimilarityEvaluator {
     const float weightNGram = 0.50;        // N-gram相似度权重，因为对密码评估很重要
     const float weightLevenshtein = 0.30;  // 莱文斯坦距离（编辑距离）相似度权重
    public:
-    StringSimilarityEvaluator(const std::string &str1, const std::string &str2);
+    // 更新待评估的字符串
+    void replaceString(const std::string &strA, const std::string &strB);
 
     // 综合评估两个字符串相似度
     float evaluateStringSimilarity();

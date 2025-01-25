@@ -23,6 +23,8 @@
  */
 
 #pragma once
+#include <string_similarity_evaluator.h>
+
 #include <directory_manager.hpp>
 #include <file_manager.hpp>
 #include <fs_interface.hpp>
@@ -146,7 +148,7 @@ class FileExplorer {
 
    public:
     /**
-     * @brief 查找指定名称的文件或目录。
+     * @brief 精确查找指定名称的文件或目录。
      *
      * 该函数从指定的父路径开始，查找所有匹配目标名称的文件或目录，返回它们的完整路径。
      * 如果路径不存在，返回一个空的路径列表。
@@ -167,24 +169,68 @@ class FileExplorer {
 
         // 遍历所有找到的目标节点
         for (auto& found_target_node : found_target_nodes) {
-            std::string found_path = found_target_node->node_data;  // 初始化路径
-
-            // 从目标节点向上遍历到根节点，构建完整路径
-            while (true) {
-                found_target_node = found_target_node->parent;                 // 移动到父节点
-                if (found_target_node->node_data == "/") break;                // 遍历到根路径时停止
-                found_path = found_target_node->node_data + "/" + found_path;  // 拼接当前节点和路径
-            }
-
-            // 根节点特殊处理
-            found_path = "/" + found_path;
-
-            // 将构建好的路径添加到结果列表中
-            found_paths.push_back(found_path);
+            std::string found_path = tree_tool.getPath(found_target_node).erase(0, 1);  // 获取节点的完整路径(并删除字符串首多余的"/")
+            found_paths.push_back(found_path);                                          // 将构建好的路径添加到结果列表中
         }
 
         // 返回所有找到的完整路径
         return found_paths;
+    }
+
+    /**
+     * @brief 模糊查找指定名称的文件或目录。
+     *
+     * 此函数从指定的父路径开始，递归遍历文件树，基于相似度计算找出与目标名称
+     * 符合相似性阈值的节点，并返回对应路径的列表。
+     *
+     * @param targetName 要搜索的目标名称。
+     * @param parentPath 搜索的起始路径，默认为根目录 "/"
+     * @param similarityThreshold 相似度的最低阈值，默认为 0.0f
+     * @return std::vector<std::string> 符合条件的路径列表，按相似度从高到低排序。
+     */
+    std::vector<std::string> searchPath(const std::string& targetName, const std::string& parentPath = "/", float similarityThreshold = 0.0f) {
+        // 获取指定路径下的文件树
+        auto fileTree = getTree(parentPath);
+
+        // 如果文件树为空，直接返回空结果
+        if (!fileTree) return {};
+
+        // 用于存储符合条件的节点及其相似度
+        std::vector<std::pair<TreeNode<std::string>*, float>> matchingNodes;
+
+        // 遍历文件树，计算每个节点名称与目标名称的相似度
+        for (const auto& nodeData : fileTree->traversalDFS()) {
+            sim.replaceString(targetName, nodeData.first);      // 设置比较的字符串
+            float similarity = sim.evaluateStringSimilarity();  // 计算相似度
+
+            // 如果相似度超过阈值，将节点加入匹配列表
+            if (similarity >= similarityThreshold) {
+                matchingNodes.emplace_back(nodeData.second, similarity);
+            }
+        }
+
+        // 如果没有找到任何匹配项，返回空结果
+        if (matchingNodes.empty()) return {};
+
+        // 按相似度从高到低排序
+        std::sort(
+            matchingNodes.begin(), matchingNodes.end(),
+            [](const std::pair<TreeNode<std::string>*, float>& a, const std::pair<TreeNode<std::string>*, float>& b) { return a.second > b.second; });
+
+        std::vector<std::string> resultPaths;       // 准备返回结果的路径列表
+        resultPaths.reserve(matchingNodes.size());  // 预分配内存以提高性能
+
+        // 遍历匹配节点，获取对应路径并存储到结果列表中
+        for (const auto& matchingNode : matchingNodes) {
+            std::string nodePath = tree_tool.getPath(matchingNode.first);
+
+            // 如果路径以 '/' 开头，则去掉根目录符号
+            if (!nodePath.empty() && nodePath[0] == '/') nodePath.erase(0, 1);
+
+            resultPaths.push_back(std::move(nodePath));  // 使用移动语义减少拷贝
+        }
+
+        return resultPaths;
     }
 
     std::vector<std::string> listDir(const std::string& dirPath = "/") { return dir.listDir(dirPath); }
@@ -270,6 +316,7 @@ class FileExplorer {
 
    private:
     TreeTool tree_tool;
+    StringSimilarityEvaluator sim;
 
     FSInterface fs;
     DirectoryManager dir;
