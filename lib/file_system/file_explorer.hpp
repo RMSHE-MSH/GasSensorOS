@@ -28,6 +28,7 @@
 #include <directory_manager.hpp>
 #include <file_manager.hpp>
 #include <fs_interface.hpp>
+#include <metadata_manager.hpp>
 #include <tree.hpp>
 #include <tree_tool.hpp>
 #include <type_traits>

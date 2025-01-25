@@ -1,5 +1,5 @@
+#include <ArduinoEigenDense.h>
 #include <command_line_interface.h>
-#include <sqlite3.h>
 
 #include <data_table.hpp>
 #include <file_explorer.hpp>
@@ -83,6 +83,10 @@ void setup() {
     for (auto& i : file.searchPath("txt")) Serial.println(i.c_str());
 
     printf("[end] -> free_heap_size = %d\n", esp_get_free_heap_size());
+
+    Eigen::Matrix<float, 2, 2> mat;
+    mat << 1, 2, 3, 4;
+    Serial.println(mat(0, 0));  // 输出 1
 }
 
 void loop() { CLI.run(); }
