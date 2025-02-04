@@ -26,8 +26,9 @@
 
 #pragma once
 
+#include <file_explorer.h>
+
 #include <algorithm>
-#include <file_explorer.hpp>
 #include <fstream>
 #include <iostream>
 #include <serial_warning.hpp>
@@ -632,10 +633,51 @@ class DataTable {
         }
     }
 
+    /**
+     * @brief 智能表格复制
+     * @param table 输入输出参数，根据其空状态决定复制方向
+     * @details
+     * 功能逻辑：
+     * 1. 当 `table` 为空时，将全局 `data` 深拷贝到 `table`。
+     * 2. 当 `table` 非空时，将 `table` 深拷贝到全局 `data`。
+     */
+    void copyTable(Table& table) noexcept {
+        if (table.empty()) {
+            deepCopy(data, table);  // 当 table 为空时，将 data 深拷贝到 table
+        } else {
+            deepCopy(table, data);  // 当 table 非空时，将 table 深拷贝到 data
+        }
+    }
+
    private:
     Table data;
     FileExplorer file;
     StringSplitter splitter;
+
+    /**
+     * @brief 执行深拷贝操作
+     *
+     * @param source 源表格
+     * @param destination 目标表格
+     * @details
+     * 将 source 表格的内容深拷贝到 destination 中。此函数是通用拷贝逻辑的抽象，
+     * 通过 `reserve` 和 `emplace_back` 优化了内存管理，并利用了移动语义提升性能。
+     */
+    void deepCopy(const Table& source, Table& destination) noexcept {
+        destination.clear();
+        destination.reserve(source.size());  // 提前分配目标表格所需内存
+
+        for (const auto& src_row : source) {
+            Row new_row;
+            new_row.reserve(src_row.size());  // 提前分配目标行所需内存
+
+            for (const auto& elem : src_row) {
+                new_row.emplace_back(elem);  // 深拷贝字符串
+            }
+
+            destination.emplace_back(std::move(new_row));  // 移动新行到目标表格
+        }
+    }
 
     // 边界检查: 检查给定的行列索引是否在表格的有效范围内(有效则返回true)
     bool checkBounds(size_t row, size_t col) const {

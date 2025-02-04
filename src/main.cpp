@@ -1,13 +1,13 @@
 #include <ArduinoEigenDense.h>
 #include <command_line_interface.h>
+#include <file_explorer.h>
 
 #include <data_table.hpp>
-#include <file_explorer.hpp>
 #include <fs_interface.hpp>
+#include <system_boot.hpp>
 #include <tree_tool.hpp>
 
 Command_Line_Interface CLI;
-FileExplorer file;
 TreeTool tree_tool;
 
 /*
@@ -71,22 +71,18 @@ void setup() {
 
 void setup() {
     Serial.begin(115200);
+    system_boot();
     delay(4000);
 
-    file.deletePath("/");
-    file.createFile("/.os/dir1/test.txt");
-    file.createFile("/.os/dir2/test.txt");
-    file.createFile("/.os/dir3/test.txt");
+    FileExplorer file("/.os/metadatabase.db");
+
+    //file.deletePath("/");
+    file.createFile("/dir/test0.txt");
+    file.createFile("/dir/test1.txt");
 
     file.printTree();
 
     for (auto& i : file.searchPath("txt")) Serial.println(i.c_str());
-
-    printf("[end] -> free_heap_size = %d\n", esp_get_free_heap_size());
-
-    Eigen::Matrix<float, 2, 2> mat;
-    mat << 1, 2, 3, 4;
-    Serial.println(mat(0, 0));  // 输出 1
 }
 
 void loop() { CLI.run(); }

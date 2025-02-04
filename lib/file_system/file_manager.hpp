@@ -277,6 +277,16 @@ class FileManager {
         return bytesWritten == dataSize;  // 确保写入字节数与数据大小一致
     }
 
+    /**
+     * @brief 获取文件大小
+     * @param filePath 文件路径
+     * @return 成功返回 文件大小，失败返回 -1
+     */
+    size_t getSize(const std::string& filePath) {
+        if (!fs.open(filePath, "r")) return -1;
+        return fs.getSize();
+    }
+
    public:
     /**
      * @brief 获取文件路径中的目录部分

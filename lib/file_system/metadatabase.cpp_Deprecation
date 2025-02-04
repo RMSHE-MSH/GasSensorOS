@@ -1,0 +1,289 @@
+class Metadatabase_Deprecation {
+   public:
+    /**
+     * @brief 构造函数，初始化数据库连接并创建表。
+     *
+     * 尝试打开指定路径的SQLite数据库文件，若数据库不存在则创建。
+     * @param db_path 数据库文件路径。
+     */
+    explicit Metadatabase(const std::string& db_path) : database_path(db_path) {
+        // 尝试打开数据库连接
+        if (sqlite3_open_v2(db_path.c_str(), &db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, NULL) != SQLITE_OK) {
+            std::cerr << "无法打开数据库: " << sqlite3_errmsg(db) << std::endl;
+            std::cerr << "数据库路径: " << db_path << std::endl;
+            db = nullptr;  // 连接失败时设置为 nullptr
+        } else {
+            createTable();  // 数据库连接成功，创建表结构
+        }
+    }
+
+    /**
+     * @brief 析构函数，关闭数据库连接。
+     *
+     * 在销毁时，确保关闭数据库连接以释放资源。
+     */
+    ~Metadatabase() {
+        if (db) {
+            sqlite3_close(db);  // 关闭数据库连接
+        }
+    }
+
+    /**
+     * @brief 插入或更新元数据。
+     * 如果数据库中已存在相同路径的元数据，则进行更新操作；否则插入新元数据。
+     * @param meta 待插入或更新的元数据。
+     * @return 操作是否成功，成功返回 true，失败返回 false。
+     */
+    bool upsertMetadata(const Metadata& meta) {
+        const char* sql = R"(
+            INSERT INTO Metadata (path, type, size, hidden, creation_time, modification_time, access_time, deletion_time, 
+                                  owner_group, read_permissions, write_permissions, modification_permissions, 
+                                  hash, description, version, author, diff_path)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(path) DO UPDATE SET
+                type = excluded.type,
+                size = excluded.size,
+                hidden = excluded.hidden,
+                modification_time = excluded.modification_time,
+                access_time = excluded.access_time,
+                deletion_time = excluded.deletion_time,
+                owner_group = excluded.owner_group,
+                read_permissions = excluded.read_permissions,
+                write_permissions = excluded.write_permissions,
+                modification_permissions = excluded.modification_permissions,
+                hash = excluded.hash,
+                description = excluded.description,
+                version = excluded.version,
+                author = excluded.author,
+                diff_path = excluded.diff_path;
+        )";
+
+        sqlite3_stmt* stmt;
+        // 预处理 SQL 语句
+        if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
+            std::cerr << "无法预处理 SQL 语句: " << sqlite3_errmsg(db) << std::endl;
+            return false;
+        }
+
+        // 绑定元数据到 SQL 语句
+        bindMetadataToStatement(meta, stmt);
+
+        // 执行 SQL 语句
+        int result = sqlite3_step(stmt);
+        sqlite3_finalize(stmt);  // 释放语句资源
+
+        return result == SQLITE_DONE;  // 判断操作是否成功
+    }
+
+    /**
+     * @brief 查询元数据。
+     *
+     * 根据文件路径查询对应的元数据，如果不存在则返回空的元数据对象。
+     * @param path 文件路径。
+     * @return 查询到的元数据对象，如果没有找到则返回空元数据。
+     */
+    Metadata queryMetadata(const std::string& path) {
+        Metadata meta;
+        const char* sql = "SELECT * FROM Metadata WHERE path = ?";
+
+        sqlite3_stmt* stmt;
+        // 预处理 SQL 语句
+        if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
+            std::cerr << "无法预处理 SQL 语句: " << sqlite3_errmsg(db) << std::endl;
+            return meta;  // 返回空元数据对象
+        }
+
+        sqlite3_bind_text(stmt, 1, path.c_str(), -1, SQLITE_STATIC);  // 绑定查询参数
+        if (sqlite3_step(stmt) == SQLITE_ROW) {
+            populateMetadataFromRow(stmt, meta);  // 填充元数据
+        }
+        sqlite3_finalize(stmt);  // 释放语句资源
+
+        return meta;  // 返回查询到的元数据对象
+    }
+
+    /**
+     * @brief 删除元数据。
+     *
+     * 根据文件路径删除数据库中的元数据记录。
+     * @param path 文件路径。
+     * @return 操作是否成功，成功返回 true，失败返回 false。
+     */
+    bool deleteMetadata(const std::string& path) {
+        const char* sql = "DELETE FROM Metadata WHERE path = ?";
+        sqlite3_stmt* stmt;
+        // 预处理 SQL 语句
+        if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
+            std::cerr << "无法预处理 SQL 语句: " << sqlite3_errmsg(db) << std::endl;
+            return false;
+        }
+
+        sqlite3_bind_text(stmt, 1, path.c_str(), -1, SQLITE_STATIC);  // 绑定删除条件
+        int result = sqlite3_step(stmt);
+        sqlite3_finalize(stmt);  // 释放语句资源
+
+        return result == SQLITE_DONE;  // 判断操作是否成功
+    }
+
+    /**
+     * @brief 将元数据库中的所有记录加载到缓存。
+     *
+     * 该函数从元数据库中查询所有元数据记录，并将其存储到缓存中。
+     * @param metadata_table 元数据缓存，键为文件的完整路径，值为元数据对象。
+     * @return 是否成功载入缓存，成功返回 true，失败返回 false。
+     */
+    bool loadMetadataToBuffer(std::unordered_map<std::string, Metadata>& metadata_table) {
+        const char* sql = "SELECT * FROM Metadata";  // 查询所有记录的 SQL 语句
+
+        sqlite3_stmt* stmt;
+        // 预处理 SQL 语句
+        if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
+            std::cerr << "无法预处理 SQL 语句: " << sqlite3_errmsg(db) << std::endl;
+            return false;
+        }
+
+        // 清空现有缓存，准备重新加载
+        metadata_table.clear();
+
+        // 遍历查询结果并填充缓存
+        while (sqlite3_step(stmt) == SQLITE_ROW) {
+            Metadata meta;
+            populateMetadataFromRow(stmt, meta);  // 填充 Metadata 对象
+            metadata_table[meta.path] = meta;     // 以文件路径为键存入缓存
+        }
+
+        sqlite3_finalize(stmt);  // 释放 SQL 语句资源
+        return true;
+    }
+
+   private:
+    /**
+     * @brief 创建元数据表（若不存在）。
+     *
+     * 如果数据库中没有名为 Metadata 的表，则创建该表。
+     */
+    void createTable() {
+        const char* sql = R"(
+            CREATE TABLE IF NOT EXISTS Metadata (
+                path TEXT PRIMARY KEY,
+                type TEXT,
+                size INTEGER,
+                hidden INTEGER,
+                creation_time INTEGER,
+                modification_time INTEGER,
+                access_time INTEGER,
+                deletion_time INTEGER,
+                owner_group TEXT,
+                read_permissions TEXT,
+                write_permissions TEXT,
+                modification_permissions TEXT,
+                hash TEXT,
+                description TEXT,
+                version INTEGER,
+                author TEXT,
+                diff_path TEXT
+            );
+        )";
+        // 执行创建表操作
+        if (sqlite3_exec(db, sql, nullptr, nullptr, nullptr) != SQLITE_OK) {
+            std::cerr << "创建表失败: " << sqlite3_errmsg(db) << std::endl;
+        }
+    }
+
+    /**
+     * @brief 绑定元数据到 SQLite 语句。
+     *
+     * 将元数据的各项信息绑定到 SQL 语句的参数位置。
+     * @param meta 元数据对象。
+     * @param stmt SQLite 语句对象。
+     */
+    void bindMetadataToStatement(const Metadata& meta, sqlite3_stmt* stmt) {
+        sqlite3_bind_text(stmt, 1, meta.path.c_str(), -1, SQLITE_STATIC);
+        sqlite3_bind_text(stmt, 2, meta.type.c_str(), -1, SQLITE_STATIC);
+        sqlite3_bind_int64(stmt, 3, meta.size);
+        sqlite3_bind_int(stmt, 4, meta.hidden);
+        sqlite3_bind_int64(stmt, 5, static_cast<int64_t>(meta.creation_time));
+        sqlite3_bind_int64(stmt, 6, static_cast<int64_t>(meta.modification_time));
+        sqlite3_bind_int64(stmt, 7, static_cast<int64_t>(meta.access_time));
+        sqlite3_bind_int64(stmt, 8, static_cast<int64_t>(meta.deletion_time));
+        sqlite3_bind_text(stmt, 9, joinSet(meta.owner_group).c_str(), -1, SQLITE_STATIC);
+        sqlite3_bind_text(stmt, 10, joinSet(meta.read_permissions).c_str(), -1, SQLITE_STATIC);
+        sqlite3_bind_text(stmt, 11, joinSet(meta.write_permissions).c_str(), -1, SQLITE_STATIC);
+        sqlite3_bind_text(stmt, 12, joinSet(meta.modification_permissions).c_str(), -1, SQLITE_STATIC);
+        sqlite3_bind_text(stmt, 13, meta.hash.c_str(), -1, SQLITE_STATIC);
+        sqlite3_bind_text(stmt, 14, meta.description.c_str(), -1, SQLITE_STATIC);
+        sqlite3_bind_int(stmt, 15, meta.version);
+        sqlite3_bind_text(stmt, 16, meta.author.c_str(), -1, SQLITE_STATIC);
+        sqlite3_bind_text(stmt, 17, meta.diff_path.c_str(), -1, SQLITE_STATIC);
+    }
+
+    /**
+     * @brief 从数据库行填充元数据。
+     *
+     * 根据 SQLite 查询结果的每一行，填充对应的元数据对象。
+     * @param stmt SQLite 语句对象。
+     * @param meta 待填充的元数据对象。
+     */
+    void populateMetadataFromRow(sqlite3_stmt* stmt, Metadata& meta) {
+        meta.path = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
+        meta.type = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
+        meta.size = sqlite3_column_int64(stmt, 2);
+        meta.hidden = sqlite3_column_int(stmt, 3) != 0;
+        meta.creation_time = static_cast<time_t>(sqlite3_column_int64(stmt, 4));
+        meta.modification_time = static_cast<time_t>(sqlite3_column_int64(stmt, 5));
+        meta.access_time = static_cast<time_t>(sqlite3_column_int64(stmt, 6));
+        meta.deletion_time = static_cast<time_t>(sqlite3_column_int64(stmt, 7));
+        meta.owner_group = splitSet(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 8)));
+        meta.read_permissions = splitSet(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 9)));
+        meta.write_permissions = splitSet(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 10)));
+        meta.modification_permissions = splitSet(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 11)));
+        meta.hash = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 12));
+        meta.description = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 13));
+        meta.version = sqlite3_column_int(stmt, 14);
+        meta.author = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 15));
+        meta.diff_path = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 16));
+    }
+
+    /**
+     * @brief 将字符串集合转换为逗号分隔的字符串。
+     *
+     * 将字符串集合中的元素连接成一个由逗号分隔的字符串。
+     * @param set 字符串集合。
+     * @return 转换后的字符串。
+     */
+    std::string joinSet(const std::set<std::string>& set) {
+        std::string result;
+        for (const auto& item : set) {
+            if (!result.empty()) {
+                result += ",";
+            }
+            result += item;
+        }
+        return result;
+    }
+
+    /**
+     * @brief 将逗号分隔的字符串转换为集合。
+     *
+     * 该函数将输入的逗号分隔字符串转换为 std::set 类型，去除重复项。
+     * @param str 输入的逗号分隔字符串。
+     * @return 返回包含每个字符串元素的 std::set。
+     */
+    std::set<std::string> splitSet(const std::string& str) {
+        std::set<std::string> result;
+        std::istringstream iss(str);
+        std::string item;
+        while (std::getline(iss, item, ',')) {
+            result.insert(item);  // 插入集合时自动去重
+        }
+        return result;
+    }
+
+    sqlite3* db = nullptr;      ///< SQLite 数据库连接对象
+    std::string database_path;  ///< 数据库文件路径
+
+   private:
+    FSInterface fs;
+    DirectoryManager dir;
+    FileManager file;
+};

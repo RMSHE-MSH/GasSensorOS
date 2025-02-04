@@ -43,6 +43,7 @@
 | `void clearCell(size_t row, size_t col)`                     | **清空指定单元格的数据。**<br/>`row`: 要清空的行索引。<br/>`col`: 要清空的列索引。 |
 | `void clearRow(size_t row)`                                  | **清空指定行的所有数据。**<br/>`row`: 要清空的行索引。       |
 | `void clearCol(size_t col)`                                  | **清空指定列的所有数据。**<br/>`col`: 要清空的列索引。       |
+| `void copyTable(Table& table)`                               | **智能表格复制。**<br/>`table`: 输入输出参数，根据其空状态决定复制方向。<br/>功能逻辑：<br/>1. 当 `table` 为空时，将 `DataTable` 中的数据拷贝到 `table`。<br/>2. 当 `table` 非空时，将 `table` 拷贝回 `DataTable`。 |
 
 ### 2.4 访问与查询
 

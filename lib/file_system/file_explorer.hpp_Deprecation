@@ -28,7 +28,8 @@
 #include <directory_manager.hpp>
 #include <file_manager.hpp>
 #include <fs_interface.hpp>
-#include <metadata_manager.hpp>
+#include <metadata_manager.h>
+#include <string_edit.hpp>
 #include <tree.hpp>
 #include <tree_tool.hpp>
 #include <type_traits>
@@ -69,6 +70,50 @@ class FileExplorer {
     }
 
     bool exists(const std::string& path) { return fs.exists(path); }
+
+    /**
+     * @brief 获取指定路径的大小（文件大小或目录的总大小）。
+     * 该函数可以递归统计目录的总大小，或直接返回文件的大小。
+     * @param path 需要统计大小的路径，支持文件或目录。
+     * @return size_t 返回路径的大小（以字节为单位）。
+     */
+    size_t getSize(const std::string& path) {
+        // 判断路径是否为目录
+        if (fs.isDirectory(path)) {
+            size_t totalSize = 0;
+            // 获取目录中的所有文件和子目录
+            std::vector<std::string> dirList = dir.listDir(path);
+
+            // 遍历目录内容
+            for (const auto& fileName : dirList) {
+                std::string fullPath = path + "/" + fileName;
+                // 递归调用获取子目录或文件的大小
+                totalSize += getSize(fullPath);
+            }
+            return totalSize;
+        } else {
+            // 如果是文件，则直接返回文件大小
+            return file.getSize(path);
+        }
+    }
+
+    /**
+     * @brief 获取文件的扩展名(文件类型)
+     * @param path 输入的完整文件路径
+     * @return 返回文件的扩展名部分。如果未找到扩展名，返回空字符串。
+     */
+    std::string getType(const std::string& path) {
+        // 查找最后一个分隔符的位置
+        size_t pos = path.find_last_of(".");
+
+        // 如果没有找到路径分隔符，返回空字符串
+        if (pos == std::string::npos) return "";
+
+        // 返回从分隔符后的字符开始的子字符串，作为文件类型
+        return path.substr(pos + 1);
+    }
+
+    void setHide(const std::string& path) {}
 
    public:
     /**
@@ -318,6 +363,7 @@ class FileExplorer {
    private:
     TreeTool tree_tool;
     StringSimilarityEvaluator sim;
+    StringSplitter splitter;
 
     FSInterface fs;
     DirectoryManager dir;
