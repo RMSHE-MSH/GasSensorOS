@@ -1,0 +1,205 @@
+/**
+ * @file metadata_manager.cpp
+ * @date 24.01.2025
+ * @author RMSHE
+ *
+ * < GasSensorOS >
+ * Copyright(C) 2025 RMSHE. All rights reserved.
+ *
+ * This program is free software : you can redistribute it and /or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.If not, see < https://www.gnu.org/licenses/>.
+ *
+ * Electronic Mail : asdfghjkl851@outlook.com
+ */
+
+#include <metadata_manager.h>
+#include <systime.h>
+
+MetadataManager::MetadataManager(const std::string& metadatabase_path) : metadb(metadatabase_path) {}
+
+/**
+ * @brief 文件创建时更新元数据。
+ *
+ * 初始化文件的基本元数据，包括路径、类型、大小、创建时间等。
+ * @param path[in] 文件路径。
+ */
+void MetadataManager::onFileCreate(const std::string& path) {
+    Metadata metadata;
+    metadata.path = path;
+    metadata.type = getType(path);                        // 获取文件类型
+    metadata.size = getSize(path);                        // 获取文件大小
+    metadata.creation_time = int_time();                  // 设置创建时间
+    metadata.modification_time = metadata.creation_time;  // 设置修改时间
+
+    // 同步更新缓存和数据库
+    upsertMetadata(path, metadata);
+}
+
+/**
+ * @brief 文件访问(读取)时更新元数据。
+ *
+ * 更新文件的最后访问时间。
+ * @param path[in] 文件路径。
+ */
+void MetadataManager::onFileRead(const std::string& path) {
+    auto it = metadata_buffer.find(path);
+    if (it != metadata_buffer.end()) {
+        it->second.access_time = int_time();  // 更新访问时间
+        metadb.upsertMetadata(it->second);    // 同步到数据库
+    }
+}
+
+/**
+ * @brief 文件修改(写入)时更新元数据。
+ *
+ * 更新文件大小和最后修改时间。
+ * @param path[in] 文件路径。
+ * @param new_size[in] 文件的新大小。
+ */
+void MetadataManager::onFileWrite(const std::string& path) {
+    auto it = metadata_buffer.find(path);
+    if (it != metadata_buffer.end()) {
+        it->second.size = getSize(path);            // 更新文件大小
+        it->second.modification_time = int_time();  // 更新修改时间
+        metadb.upsertMetadata(it->second);          // 同步到数据库
+    }
+}
+
+/**
+ * @brief 文件删除时更新元数据。
+ *
+ * 将文件标记为已删除并更新删除时间。
+ * @param path[in] 文件路径。
+ */
+void MetadataManager::onFileDelete(const std::string& path) {
+    auto it = metadata_buffer.find(path);
+    if (it != metadata_buffer.end()) {
+        it->second.deletion_time = int_time();  // 设置删除时间
+        metadb.upsertMetadata(it->second);      // 同步到数据库
+    }
+}
+
+/**
+ * @brief 获取文件元数据。
+ *
+ * 该函数从缓存中查找指定路径的元数据。如果缓存中没有，则返回 false。
+ * @param path[in] 文件路径。
+ * @param metadata[out] 存储获取到的元数据。
+ * @return 如果缓存中找到元数据，返回 true；否则返回 false。
+ */
+bool MetadataManager::getMetadata(const std::string& path, Metadata& metadata) {
+    auto it = metadata_buffer.find(path);  // 查找缓存
+    if (it == metadata_buffer.end()) {
+        return false;  // 如果缓存中找不到元数据，返回 false
+    }
+    metadata = it->second;  // 找到则通过引用返回元数据
+    return true;
+}
+
+/**
+ * @brief 插入或更新元数据。
+ *
+ * 如果数据库中已存在相同路径的元数据，则进行更新操作；否则插入新元数据。
+ * @param path 文件路径。
+ * @param metadata 待插入或更新的元数据。
+ */
+void MetadataManager::upsertMetadata(const std::string& path, const Metadata& metadata) {
+    metadata_buffer[path] = metadata;  // 使用 operator[] 插入或更新缓存
+
+    // 先尝试更新元数据,若不存在则添加;
+    if (!metadb.updateMetadata(metadata)) metadb.addMetadata(metadata);
+}
+
+/**
+ * @brief 复制元数据。
+ * @param sourcePath 源文件或目录的路径。
+ * @param targetPath 目标文件或目录的路径。
+ */
+void MetadataManager::copyMetadata(const std::string& sourcePath, const std::string& targetPath) {
+    Metadata source_meta;
+    getMetadata(sourcePath, source_meta);
+    upsertMetadata(targetPath, source_meta);
+}
+
+/**
+ * @brief 移动指定路径的文件或目录到目标路径。
+ * @param sourcePath 源文件或目录的路径。
+ * @param targetPath 目标文件或目录的路径。
+ */
+void MetadataManager::moveMetadata(const std::string& sourcePath, const std::string& targetPath) {
+    copyMetadata(sourcePath, targetPath);
+    deleteMetadata(sourcePath);
+}
+
+/**
+ * @brief 删除元数据。
+ *
+ * 该函数从缓存中删除指定路径的元数据，并从数据库中删除。
+ * @param path 文件路径。
+ */
+void MetadataManager::deleteMetadata(const std::string& path) {
+    metadata_buffer.erase(path);  // 删除缓存中的元数据
+    metadb.deleteMetadata(path);  // 删除数据库中的元数据
+}
+
+/**
+ * @brief 将元数据库中的所有数据加载到缓存中。
+ */
+void MetadataManager::loadMetadataToBuffer() {
+    if (!metadb.loadMetadataToBuffer(metadata_buffer)) {
+        WARN(WarningLevel::ERROR, "加载元数据库失败.");
+    }
+}
+
+/**
+ * @brief 获取指定路径的大小（文件大小或目录的总大小）。
+ * 该函数可以递归统计目录的总大小，或直接返回文件的大小。
+ * @param path 需要统计大小的路径，支持文件或目录。
+ * @return size_t 返回路径的大小（以字节为单位）。
+ */
+size_t MetadataManager::getSize(const std::string& path) {
+    // 判断路径是否为目录
+    if (fs.isDirectory(path)) {
+        size_t totalSize = 0;
+        // 获取目录中的所有文件和子目录
+        std::vector<std::string> dirList = dir.listDir(path);
+
+        // 遍历目录内容
+        for (const auto& fileName : dirList) {
+            std::string fullPath = path + "/" + fileName;
+            // 递归调用获取子目录或文件的大小
+            totalSize += getSize(fullPath);
+        }
+        return totalSize;
+    } else {
+        // 如果是文件，则直接返回文件大小
+        return file.getSize(path);
+    }
+}
+
+/**
+ * @brief 获取文件的扩展名(文件类型)
+ * @param path 输入的完整文件路径
+ * @return 返回文件的扩展名部分。如果未找到扩展名，返回空字符串。
+ */
+std::string MetadataManager::getType(const std::string& path) {
+    size_t pos = path.find_last_of(".");      // 查找最后一个分隔符的位置
+    if (pos == std::string::npos) return "";  // 如果没有找到路径分隔符，返回空字符串
+    return path.substr(pos + 1);              // 返回从分隔符后的字符开始的子字符串，作为文件类型
+}
+
+/**
+ * @brief 设置指定路径为隐藏路径。
+ * @param path 要隐藏的文件或目录路径。
+ */
+void MetadataManager::setHide(const std::string& path) {}

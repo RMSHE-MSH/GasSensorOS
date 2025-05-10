@@ -31,7 +31,9 @@
  * @brief 构造函数，初始化并挂载文件系统
  * 在创建 FileExplorer 对象时，会自动挂载文件系统。
  */
-FileExplorer::FileExplorer(const std::string& metadatabase_path) : meta(metadatabase_path) { fs.mount(); }
+// FileExplorer::FileExplorer(const std::string& metadatabase_path) : meta(metadatabase_path) { fs.mount(); }
+
+FileExplorer::FileExplorer(const std::string& metadatabase_path) { fs.mount(); }
 
 /**
  * @brief 析构函数
@@ -48,7 +50,7 @@ bool FileExplorer::createFile(const std::string& filePath) {
     std::string dir_path = file.getDirectoryPath(filePath);
     if (!dir.createDir(dir_path)) return false;
     if (!file.createFile(filePath)) return false;
-    meta.onFileCreate(filePath);  // 文件创建时更新元数据
+    // meta.onFileCreate(filePath);  // 文件创建时更新元数据
     return true;
 }
 
@@ -59,7 +61,7 @@ bool FileExplorer::createFile(const std::string& filePath) {
  */
 bool FileExplorer::createDir(const std::string& dirPath) {
     if (!dir.createDir(dirPath)) return false;
-    meta.onFileCreate(dirPath);  // 目录创建时更新元数据
+    // meta.onFileCreate(dirPath);  // 目录创建时更新元数据
     return true;
 }
 
@@ -82,7 +84,7 @@ void FileExplorer::copyPath(const std::string& sourcePath, const std::string& ta
     } else {
         file.copyFile(sourcePath, targetPath);  // 复制文件
     }
-    meta.copyMetadata(sourcePath, targetPath);  // 复制元数据
+    // meta.copyMetadata(sourcePath, targetPath);  // 复制元数据
 }
 
 /**
@@ -97,8 +99,8 @@ void FileExplorer::movePath(const std::string& sourcePath, const std::string& ta
     } else {
         if (!file.copyFile(sourcePath, targetPath)) return;  // 复制文件
     }
-    meta.moveMetadata(sourcePath, targetPath);  // 移动元数据
-    fs.deletePath(sourcePath);                  // 删除源文件;
+    // meta.moveMetadata(sourcePath, targetPath);  // 移动元数据
+    fs.deletePath(sourcePath);  // 删除源文件;
 }
 
 /**

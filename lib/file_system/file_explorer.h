@@ -23,7 +23,7 @@
  */
 
 #pragma once
-//#include <metadata_manager.h>
+// #include <metadata_manager.h>
 #include <string_similarity_evaluator.h>
 
 #include <directory_manager.hpp>
@@ -71,5 +71,5 @@ class FileExplorer {
     FSInterface fs;
     DirectoryManager dir;
     FileManager file;
-    //MetadataManager meta;
+    // MetadataManager meta;
 };

@@ -1,0 +1,341 @@
+/**
+ * @file metadatabase.hpp
+ * @date 25.01.2025
+ * @author RMSHE
+ *
+ * < GasSensorOS >
+ * Copyright(C) 2025 RMSHE. All rights reserved.
+ *
+ * This program is free software : you can redistribute it and /or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.If not, see < https://www.gnu.org/licenses/>.
+ *
+ * Electronic Mail : asdfghjkl851@outlook.com
+ */
+
+#pragma once
+#include <flashdb.h>
+
+#include <cstdlib>
+#include <cstring>
+#include <ctime>
+#include <iostream>
+#include <set>
+#include <sstream>
+#include <string>
+#include <unordered_map>
+
+struct Metadata {
+    // ================== 基本属性 ==================
+    std::string path;     // 文件完整路径，包含目录和文件名
+    std::string type;     // 文件类型（如 "txt", "jpg" 等）
+    size_t size = 0;      // 文件大小，单位为字节
+    bool hidden = false;  // 是否为隐藏文件（默认不隐藏）
+
+    // ================== UNIX时间戳 ==================
+    time_t creation_time = -1;      // 文件创建时间
+    time_t modification_time = -1;  // 文件最后一次修改时间
+    time_t access_time = -1;        // 文件最后一次访问时间
+    time_t deletion_time = -1;      // 文件删除时间
+
+    // ================== 权限和所有权 ==================
+    std::set<std::string> owner_group = {"root"};    // 文件所属的用户组(完全控制权)
+    std::set<std::string> read_permissions;          // 可读取文件的用户
+    std::set<std::string> write_permissions;         // 可写入文件的用户
+    std::set<std::string> modification_permissions;  // 可修改文件的用户
+
+    // ================== 扩展属性 ==================
+    std::string hash;         // 文件摘要
+    std::string description;  // 文件描述
+};
+
+/**
+ * @brief Flash 数据库访问类
+ *
+ * 该类封装了对 FlashDB 的操作接口，支持对文件元数据的插入、更新、查询、删除及遍历加载操作。
+ * 数据以文件路径作为唯一键存储，采用文本序列化方式。
+ */
+class Metadatabase {
+   public:
+    /**
+     * @brief 构造函数
+     * @param dbNamespace 数据库命名空间或路径，用于区分不同数据库
+     *
+     * 调用 fdb_kvdb_init 初始化 FlashDB 数据库，使用 LittleFS 作为文件系统，
+     * 如果初始化失败则通过串口输出错误信息。
+     */
+    explicit Metadatabase(const std::string &dbNamespace) : m_db_(nullptr), initialized_(false) {
+        // 初始化数据库，去掉 &m_db_，直接传递 m_db_
+        int ret = fdb_kvdb_init(m_db_, dbNamespace.c_str(), "littlefs", nullptr, nullptr);
+        if (ret != FDB_NO_ERR || m_db_ == nullptr) {
+            Serial.print("Error: Unable to initialize FlashDB with namespace: ");
+            Serial.println(dbNamespace.c_str());
+        } else {
+            initialized_ = true;
+        }
+    }
+
+    /**
+     * @brief 析构函数
+     *
+     * 析构时对 FlashDB 进行资源释放（若 FlashDB 提供释放接口，可在此调用）。
+     */
+    ~Metadatabase() {
+        // 若 FlashDB 提供资源释放接口，例如 fdb_kvdb_deinit，可在此调用
+        // fdb_kvdb_deinit(m_db_);
+    }
+
+    /**
+     * @brief 添加文件元数据记录
+     * @param meta 待添加的文件元数据对象
+     * @return true 添加成功；false 如果记录已存在或操作失败
+     *
+     * 如果数据库中已存在该记录（根据文件路径判断），则不重复添加。
+     */
+    bool addMetadata(const Metadata &meta) {
+        if (!initialized_) {
+            return false;
+        }
+        // 检查记录是否存在（fdb_kv_get 返回非 NULL 表示记录存在）
+        char *existing = fdb_kv_get(m_db_, meta.path.c_str());
+        if (existing != nullptr) {
+            return false;  // 记录已存在
+        }
+        const std::string serialized = serializeMetadata(meta);
+        int ret = fdb_kv_set(m_db_, meta.path.c_str(), serialized.c_str());
+        return (ret == FDB_NO_ERR);
+    }
+
+    /**
+     * @brief 更新文件元数据记录
+     * @param meta 待更新的文件元数据对象
+     * @return true 更新成功；false 如果记录不存在或操作失败
+     *
+     * 仅当数据库中已存在该记录时才进行更新操作。
+     */
+    bool updateMetadata(const Metadata &meta) {
+        if (!initialized_) {
+            return false;
+        }
+        // 若记录不存在则不进行更新
+        char *existing = fdb_kv_get(m_db_, meta.path.c_str());
+        if (existing == nullptr) {
+            return false;
+        }
+        const std::string serialized = serializeMetadata(meta);
+        int ret = fdb_kv_set(m_db_, meta.path.c_str(), serialized.c_str());
+        return (ret == FDB_NO_ERR);
+    }
+
+    /**
+     * @brief 删除文件元数据记录
+     * @param path 文件完整路径（作为键）
+     * @return true 删除成功；false 删除失败
+     */
+    bool deleteMetadata(const std::string &path) {
+        if (!initialized_) {
+            return false;
+        }
+        int ret = fdb_kv_del(m_db_, path.c_str());
+        return (ret == FDB_NO_ERR);
+    }
+
+    /**
+     * @brief 获取文件元数据记录
+     * @param path 文件完整路径（作为键）
+     * @param meta [out] 输出参数，用于存储获取到的文件元数据
+     * @return true 获取成功；false 获取失败
+     */
+    bool getMetadata(const std::string &path, Metadata &meta) {
+        if (!initialized_) {
+            return false;
+        }
+        char *value = fdb_kv_get(m_db_, path.c_str());
+        if (value == nullptr) {
+            return false;  // 记录不存在
+        }
+        return deserializeMetadata(std::string(value), meta);
+    }
+
+    /**
+     * @brief 加载所有文件元数据记录到内存中
+     * @param buffer [out] 输出参数，存储所有加载的元数据记录（键为文件路径）
+     * @return true 加载成功；false 加载失败
+     *
+     * 通过回调函数遍历数据库中所有记录，并将反序列化后的数据存入 buffer。
+     */
+    bool loadMetadataToBuffer(std::unordered_map<std::string, Metadata> &buffer) {
+        if (!initialized_) {
+            return false;
+        }
+        // 使用修正后的回调函数
+        int ret = fdb_kv_iterate(m_db_, metadataIterator, &buffer);
+        return (ret == FDB_NO_ERR);
+    }
+
+   private:
+    fdb_kvdb_t m_db_;  /**< FlashDB 键值数据库句柄 */
+    bool initialized_; /**< 数据库是否成功初始化的标志 */
+
+    /**
+     * @brief 将字符串集合序列化为逗号分隔的字符串
+     * @param s 待序列化的字符串集合
+     * @return 序列化后的字符串
+     *
+     * 例如：{"user1", "user2"} 序列化为 "user1,user2"。
+     */
+    std::string serializeSet(const std::set<std::string> &s) const {
+        std::ostringstream oss;
+        bool first = true;
+        for (const auto &item : s) {
+            if (!first) {
+                oss << ",";
+            }
+            oss << item;
+            first = false;
+        }
+        return oss.str();
+    }
+
+    /**
+     * @brief 反序列化逗号分隔的字符串为字符串集合
+     * @param s 待反序列化的字符串
+     * @return 反序列化后的字符串集合
+     */
+    std::set<std::string> deserializeSet(const std::string &s) const {
+        std::set<std::string> result;
+        std::istringstream iss(s);
+        std::string token;
+        while (std::getline(iss, token, ',')) {
+            if (!token.empty()) {
+                result.insert(token);
+            }
+        }
+        return result;
+    }
+
+    /**
+     * @brief 序列化文件元数据对象为字符串
+     * @param meta 待序列化的文件元数据对象
+     * @return 序列化后的字符串
+     *
+     * 序列化格式：各字段按固定顺序以换行符分隔，集合字段内部以逗号分隔。
+     */
+    std::string serializeMetadata(const Metadata &meta) const {
+        std::ostringstream oss;
+        oss << meta.path << "\n"
+            << meta.type << "\n"
+            << meta.size << "\n"
+            << (meta.hidden ? 1 : 0) << "\n"
+            << meta.creation_time << "\n"
+            << meta.modification_time << "\n"
+            << meta.access_time << "\n"
+            << meta.deletion_time << "\n"
+            << serializeSet(meta.owner_group) << "\n"
+            << serializeSet(meta.read_permissions) << "\n"
+            << serializeSet(meta.write_permissions) << "\n"
+            << serializeSet(meta.modification_permissions) << "\n"
+            << meta.hash << "\n"
+            << meta.description;
+        return oss.str();
+    }
+
+    /**
+     * @brief 反序列化字符串为文件元数据对象
+     * @param data 待反序列化的字符串
+     * @param meta [out] 输出参数，用于存储反序列化后的文件元数据
+     * @return true 反序列化成功；false 反序列化失败
+     *
+     * 要求字符串中各字段按照固定顺序排列，集合字段内部以逗号分隔。
+     */
+    static bool deserializeMetadata(const std::string &data, Metadata &meta) {
+        std::istringstream iss(data);
+        std::string line;
+        // 依次读取各字段，读取失败则返回 false
+        if (!std::getline(iss, meta.path)) return false;
+        if (!std::getline(iss, meta.type)) return false;
+
+        if (!std::getline(iss, line)) return false;
+        meta.size = static_cast<size_t>(std::strtoul(line.c_str(), nullptr, 10));
+
+        if (!std::getline(iss, line)) return false;
+        meta.hidden = (line == "1");
+
+        if (!std::getline(iss, line)) return false;
+        meta.creation_time = static_cast<time_t>(std::strtoll(line.c_str(), nullptr, 10));
+
+        if (!std::getline(iss, line)) return false;
+        meta.modification_time = static_cast<time_t>(std::strtoll(line.c_str(), nullptr, 10));
+
+        if (!std::getline(iss, line)) return false;
+        meta.access_time = static_cast<time_t>(std::strtoll(line.c_str(), nullptr, 10));
+
+        if (!std::getline(iss, line)) return false;
+        meta.deletion_time = static_cast<time_t>(std::strtoll(line.c_str(), nullptr, 10));
+
+        if (!std::getline(iss, line)) return false;
+        meta.owner_group = deserializeSetStatic(line);
+
+        if (!std::getline(iss, line)) return false;
+        meta.read_permissions = deserializeSetStatic(line);
+
+        if (!std::getline(iss, line)) return false;
+        meta.write_permissions = deserializeSetStatic(line);
+
+        if (!std::getline(iss, line)) return false;
+        meta.modification_permissions = deserializeSetStatic(line);
+
+        if (!std::getline(iss, meta.hash)) return false;
+        // 剩余部分作为 description（可能包含换行符）
+        std::ostringstream oss;
+        while (std::getline(iss, line)) {
+            oss << line << "\n";
+        }
+        meta.description = oss.str();
+        if (!meta.description.empty() && meta.description.back() == '\n') {
+            meta.description.pop_back();  // 去除最后多余的换行符
+        }
+        return true;
+    }
+
+    /**
+     * @brief 静态辅助函数：反序列化逗号分隔的字符串为字符串集合
+     * @param s 待反序列化的字符串
+     * @return 反序列化后的字符串集合
+     */
+    static std::set<std::string> deserializeSetStatic(const std::string &s) {
+        std::set<std::string> result;
+        std::istringstream iss(s);
+        std::string token;
+        while (std::getline(iss, token, ',')) {
+            if (!token.empty()) {
+                result.insert(token);
+            }
+        }
+        return result;
+    }
+
+    static bool metadataIterator(fdb_kvdb_t db, struct fdb_blob *blob, void *arg) {
+        auto *pBuffer = static_cast<std::unordered_map<std::string, Metadata> *>(arg);
+
+        // 解析键值对
+        std::string key(static_cast<const char *>(blob->key));
+        std::string value(static_cast<const char *>(blob->value));
+
+        Metadata meta;
+        if (deserializeMetadata(value, meta)) {
+            (*pBuffer)[key] = meta;
+        }
+
+        return true;  // 返回 true 继续迭代
+    }
+};
