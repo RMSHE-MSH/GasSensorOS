@@ -1,4 +1,0 @@
-name: flashdb
-build:
-  cmake-ext: True
-  kconfig-ext: True
