@@ -26,6 +26,7 @@
 #include <Arduino.h>
 
 #include <data_table.hpp>
+#include <file_explorer_shell.hpp>
 #include <functional>
 #include <iostream>
 #include <serial_warning.hpp>
@@ -178,6 +179,29 @@ class COMMAND_TABLE {
         add_cmd("osinfo", {}, std::bind(&CMD_FUNC::osinfo, &cmd_func, std::placeholders::_1, std::placeholders::_2));
         add_cmd("test", {"-f", "-s"}, std::bind(&CMD_FUNC::test, &cmd_func, std::placeholders::_1, std::placeholders::_2));
         add_cmd("wifi_connect", {}, std::bind(&CMD_FUNC::wifi_connect, &cmd_func, std::placeholders::_1, std::placeholders::_2));
+
+        // add_cmd("touch", {"", "-a", "-r"}, std::bind(&FileExplorerShell::touch, &file_explorer_shell, std::placeholders::_1, std::placeholders::_2));
+
+        // 切换当前工作目录
+        add_cmd("cd", {}, std::bind(&FileExplorerShell::cd, &file_explorer_shell, std::placeholders::_1, std::placeholders::_2));
+
+        // 打印当前工作目录
+        add_cmd("pwd", {}, std::bind(&FileExplorerShell::pwd, &file_explorer_shell, std::placeholders::_1, std::placeholders::_2));
+
+        // 查看目录内容
+        add_cmd("ls", {}, std::bind(&FileExplorerShell::ls, &file_explorer_shell, std::placeholders::_1, std::placeholders::_2));
+
+        // 以树状图列出目录的内容
+        add_cmd("tree", {}, std::bind(&FileExplorerShell::tree, &file_explorer_shell, std::placeholders::_1, std::placeholders::_2));
+
+        // 创建目录
+        add_cmd("mkdir", {}, std::bind(&FileExplorerShell::mkdir, &file_explorer_shell, std::placeholders::_1, std::placeholders::_2));
+
+        // 删除目录或文件
+        add_cmd("rm", {}, std::bind(&FileExplorerShell::rm, &file_explorer_shell, std::placeholders::_1, std::placeholders::_2));
+
+        // 移动或重命名目录和文件
+        add_cmd("mv", {}, std::bind(&FileExplorerShell::mv, &file_explorer_shell, std::placeholders::_1, std::placeholders::_2));
     }
 
     /**
@@ -225,7 +249,8 @@ class COMMAND_TABLE {
     }
 
    private:
-    CMD_FUNC cmd_func;  ///< 内建命令的处理函数对象，例如 help, osinfo 等
+    CMD_FUNC cmd_func;                      ///< 内建命令的处理函数对象，例如 help, osinfo 等
+    FileExplorerShell file_explorer_shell;  ///< 文件资源管理器内建命令的处理函数对象
 
     // 命令表：以命令名称为键，值是一个包含命令标志和处理函数的对
     std::unordered_map<std::string,
