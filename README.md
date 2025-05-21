@@ -50,8 +50,7 @@
 
 此文档整理了 `GasSensorOS` 目前支持的全部命令行操作，适用于嵌入式平台的常用管理任务。文档遵循统一语法规则，便于快速查阅和学习。
 
-> 速查表链接 (Cheat Sheet link): [GSOS CLI Commands Cheat Sheet](/lib/kernel/GSOS%20CLI%20Commands Cheat%20Sheet.md)
->
+速查表链接 (Cheat Sheet link): [GSOS CLI Commands Cheat Sheet](/lib/kernel/GSOS%20CLI%20Commands Cheat%20Sheet.md)
 
 ---
 
