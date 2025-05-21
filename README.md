@@ -15,7 +15,7 @@
 
 | 更新日期   | 版本号                   | 主要更新内容                                                 |
 | :--------- | :----------------------- | :----------------------------------------------------------- |
-| 2025.05.13 | Alpha.Mark3.2025.05.13   |                                                              |
+| 2025.05.21 | Alpha.Mark3.2025.05.21   | 1. 新增`RingBuffer<T, Capacity>`通用环形缓冲区模板类容器。<br/>2. 完成`File Explorer Shell`的开发, 现在可以通过`命令行接口（CLI)`使用`文件资源管理器`来管理文件系统。目前共 14 个命令可用, 具体支持的命令为:`cd` `pwd` `ls` `tree` `mkdir` `rm` `mv` `cp` `touch` `cat` `echo` `printf` `find` `search`, 未来还会继续完善。 |
 | 2025.05.12 | Alpha.Mark3.2025.05.12   | 完成了`FileExplorer`的开发, 现在文件资源管理体系已可用。     |
 | 2025.01.21 | Alpha.Mark3.2025.01.21   | 1. 针对通用树数据结构容器 `tree.hpp` 的功能更新，`findDescendant` 和 `findNode` 函数在更新后，原先只返回第一个匹配的节点指针，现在返回一个包含所有匹配节点指针的 `std::vector` 容器，适用于树中存在多个相同名称节点的情况。<br/>2. `DataTable`类新增了`saveTable`函数，支持以覆写或追加模式保存表格数据到CSV文件，同时`loadTable`函数可以从CSV文件加载数据并更新当前表格内容。`getTableString` 用于获取表格的字符串表示。修复若干Bug。 |
 | 2025.01.17 | Alpha.Mark3.2025.01.17   | 1. `TreeTool` 是通用树数据结构容器 `tree.hpp` 的补丁工具类，提供了递归获取树结构的功能。其主要作用是帮助用户以树形结构字符串的形式输出树，便于调试和查看树的层级关系。开发这个补丁的作用主要是用于在文件系统的命令行输出中打印文件结构树。<br/>2. 正在搭建文件系统架构, 目前正逐渐完成 `FileExplorer`, `FileManager`, `DirectoryManager` 等主要组件的开发. |
@@ -43,6 +43,15 @@
 - **完全适配:** `ESP32-S3-WROOM-1`,`ESP32-WROOM-32E`, `ESP32-WROOM-32D`
 - **经测试部分适配:**  `ESP-12F`, `ESP-01`
 - **未测试部分适配:** `ESP8266EX`
+
+---
+
+## 🧭 GSOS 命令速查表 (CLI Commands Cheat Sheet)
+
+此文档整理了 `GasSensorOS` 目前支持的全部命令行操作，适用于嵌入式平台的常用管理任务。文档遵循统一语法规则，便于快速查阅和学习。
+
+> 速查表链接 (Cheat Sheet link): [GSOS CLI Commands Cheat Sheet](/lib/kernel/GSOS%20CLI%20Commands Cheat%20Sheet.md)
+>
 
 ---
 
@@ -110,3 +119,25 @@
 | `user_data_table.hpp` | 28.12.2024 | 多用户数据管理类，主要用于管理用户的添加、删除和验证操作。通过结合 PBKDF2 哈希算法和真随机盐值（Salt）生成用户密码的派生密钥，不直接存储用户密码，确保用户数据的安全性。 | [User Data Table Documentation](/lib/sys_services/User%20Data%20Table%20Documentation.md) |
 
 ---
+
+> @project GasSensorOS
+> @date 2025
+> @author RMSHE
+>
+> < GasSensorOS >
+> Copyright(C) 2025 RMSHE. All rights reserved.
+>
+> This program is free software : you can redistribute it and /or modify
+> it under the terms of the GNU Affero General Public License as
+> published by the Free Software Foundation, either version 3 of the
+> License, or (at your option) any later version.
+>
+> This program is distributed in the hope that it will be useful,
+> but WITHOUT ANY WARRANTY; without even the implied warranty of
+> MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.See the
+> GNU Affero General Public License for more details.
+>
+> You should have received a copy of the GNU Affero General Public License
+> along with this program.If not, see < https://www.gnu.org/licenses/>.
+>
+> Electronic Mail : asdfghjkl851@outlook.com

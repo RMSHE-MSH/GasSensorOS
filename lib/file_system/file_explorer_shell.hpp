@@ -1,9 +1,33 @@
+/**
+ * @file file_explorer_shell.hpp
+ * @date 21.05.2025
+ * @author RMSHE
+ *
+ * < GasSensorOS >
+ * Copyright(C) 2025 RMSHE. All rights reserved.
+ *
+ * This program is free software : you can redistribute it and /or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.If not, see < https://www.gnu.org/licenses/>.
+ *
+ * Electronic Mail : asdfghjkl851@outlook.com
+ */
 
 #pragma once
 #include <file_explorer.h>
 #include <ring_buffer.h>
 
 #include <serial_warning.hpp>
+#include <sstream>
 #include <string_edit.hpp>
 
 class FileExplorerShell {
@@ -215,9 +239,9 @@ class FileExplorerShell {
      *
      * 支持的典型用法：
      * @code
-     * mv file.txt new_name.txt          // 重命名工作目录下的文件或目录
-     * mv file1.txt file2.txt /usr/dir   // 移动工作目录下的多个目录或文件到指定目录
-     * mv /dir1/file.txt /dir2 /usr/dir  // 移动多个指定路径下的文件或目录到目标目录
+     * cp file.txt new_name.txt          // 重命名工作目录下的文件或目录
+     * cp file1.txt file2.txt /usr/dir   // 移动工作目录下的多个目录或文件到指定目录
+     * cp /dir1/file.txt /dir2 /usr/dir  // 移动多个指定路径下的文件或目录到目标目录
      * @endcode
      *
      * @param flags 命令选项列表，可支持以下标志：
@@ -266,109 +290,394 @@ class FileExplorerShell {
         // ------- 移动前检查目标目录 -------
         const std::string targetDirPath = targetPath;
         if (!file_.exists(targetDirPath) && !fs_.isDirectory(targetDirPath)) {
-            WARN(WarningLevel::ERROR, "目标目录不存在: ", targetDirPath);
+            WARN(WarningLevel::ERROR, "目标目录不存在或不是目录: ", targetDirPath);
             return;
         }
 
         // ------- 遍历并移动每个源 -------
-        for (const std::string& srcPath : sourcePaths) {
+        for (const std::string& sourcePath : sourcePaths) {
             // 源路径存在性检查
-            if (!file_.exists(srcPath)) {
-                WARN(WarningLevel::WARNING, "源路径不存在，跳过: ", srcPath);
+            if (!file_.exists(sourcePath)) {
+                WARN(WarningLevel::WARNING, "源路径不存在，跳过: ", sourcePath);
                 continue;
             }
 
             // 构造目标子路径（防止重名覆盖）
-            std::string baseName = getName(srcPath);                      ///< 提取源的文件名或目录名
-            std::string fullTargetPath = targetDirPath + "/" + baseName;  ///< 拼接目录与文件名，生成完整路径
+            std::string baseName = getName(sourcePath);                           ///< 提取源的文件名或目录名
+            std::string fullTargetPath = buildFullPath(baseName, targetDirPath);  ///< 拼接目录与文件名，生成完整路径
 
             // 如果目标已存在且未强制覆盖，则自动重命名
             if (file_.exists(fullTargetPath)) {
                 if (forceOverwrite) {
                     file_.deletePath(fullTargetPath);  ///< 强制模式下先删除
                 } else {
-                    fullTargetPath = targetDirPath + "/" + "(New)" + baseName;  ///< 自动生成唯一新名称
+                    fullTargetPath = buildFullPath("(New)" + baseName, targetDirPath);  ///< 自动生成唯一新名称
                     WARN(WarningLevel::WARNING, "命名冲突，已重命名目标: ", fullTargetPath);
                 }
             }
 
             // 执行移动操作
-            file_.movePath(srcPath, fullTargetPath);
+            file_.movePath(sourcePath, fullTargetPath);
             if (verbose) {
-                std::cout << "Moved: " << srcPath << " -> " << fullTargetPath << "\n";
+                std::cout << "Moved: " << sourcePath << " -> " << fullTargetPath << "\n";
             }
         }
     }
 
-    /*
-    void cd(const std::vector<std::string>& flags, const std::vector<std::string>& parameters) {
-        std::string path = parameters[0];  // cd命令只有一个参数,没有标志
-
-        if (path == working_dir) return;  // 工作路径没有改变
-
-        // 切换到上次访问的目录(后退)
-        if (path == "<") {
-            if (forward_history.empty()) return;
-
-            working_dir = forward_history.back();  // 更新工作目录
-            forward_history.popBack();
-            back_history.pushBack(working_dir);
-
-            Serial.println(working_dir.c_str());
-            return;
-        }
-        // 撤销后退(前进)
-        if (path == ">") {
-            if (back_history.empty()) return;
-
-            working_dir = back_history.back();  // 更新工作目录
-            back_history.popBack();
-            forward_history.pushBack(working_dir);
-
-            Serial.println(working_dir.c_str());
-            return;
-        }
-        // 切换到上一级目录
-        if (path == "../") {
-            std::vector<std::string> path_tokens = splitter.split(working_dir, {"/"});
-
-            // 确保vector非空后,弹出最后一个元素
-            if (!path_tokens.empty()) path_tokens.pop_back();
-
-            forward_history.pushBack(working_dir);
-
-            // 更新工作目录
-            working_dir = "/";
-            for (auto& token : path_tokens) working_dir += token;
-
-            Serial.println(working_dir.c_str());
+    /**
+     * @brief 复制目录和文件
+     *
+     * 支持的典型用法：
+     * @code
+     * mv file1.txt file2.txt /usr/dir   // 复制工作目录下的多个目录或文件到指定目录
+     * mv /dir1/file.txt /dir2 /usr/dir  // 复制多个指定路径下的文件或目录到目标目录
+     * @endcode
+     *
+     * @param flags 命令选项列表，可支持以下标志：
+     *              - "-f": 强制覆盖已存在目标
+     *              - "-v": 显示详细输出信息
+     * @param parameters 路径参数列表，要求至少两个：一个或多个源路径 + 一个目标路径
+     */
+    void cp(const std::vector<std::string>& flags, const std::vector<std::string>& parameters) {
+        // ------- 基本参数检查 -------
+        if (parameters.size() < 2) {
+            WARN(WarningLevel::ERROR, "参数不足: 至少需要一个源路径和一个目标目录.");
             return;
         }
 
-        // 判断路径是否为绝对路径
-        if (!isAbsolutePath(path)) path = working_dir + "/" + path;
+        // ------- 标志位处理 -------
+        const bool forceOverwrite = std::find(flags.begin(), flags.end(), "-f") != flags.end();
+        const bool verbose = std::find(flags.begin(), flags.end(), "-v") != flags.end();
 
-        if (!file.exists(path)) return;
+        // ------- 路径提取 -------
+        const std::string targetParam = parameters.back();
+        const size_t sourceCount = parameters.size() - 1;
 
-        forward_history.pushBack(working_dir);
-        working_dir = path;  // 更新工作目录
+        // 构建目标完整路径
+        const std::string targetDirPath = buildFullPath(targetParam);
 
-        Serial.println(working_dir.c_str());
+        // 目标必须是已存在的目录
+        if (!file_.exists(targetDirPath) || !fs_.isDirectory(targetDirPath)) {
+            WARN(WarningLevel::ERROR, "目标目录不存在或不是目录: ", targetDirPath);
+            return;
+        }
+
+        // 构建每个源的完整路径
+        std::vector<std::string> sourcePaths;
+        sourcePaths.reserve(sourceCount);
+        for (size_t i = 0; i < sourceCount; ++i) {
+            sourcePaths.emplace_back(buildFullPath(parameters[i]));
+        }
+
+        // ------- 遍历并复制每个源到目标目录 -------
+        for (const auto& sourcePath : sourcePaths) {
+            if (!file_.exists(sourcePath)) {
+                WARN(WarningLevel::WARNING, "源路径不存在，跳过: ", sourcePath);
+                continue;
+            }
+
+            // 目标子路径 = 目标目录 + 源的基本名称
+            std::string baseName = getName(sourcePath);
+            std::string targetPath = buildFullPath(baseName, targetDirPath);
+
+            // 冲突处理
+            if (file_.exists(targetPath)) {
+                if (forceOverwrite) {
+                    file_.deletePath(targetPath);
+                } else {
+                    WARN(WarningLevel::WARNING, "目标已存在，跳过复制: ", targetPath);
+                    continue;
+                }
+            }
+
+            // 执行复制
+            file_.copyPath(sourcePath, targetPath);
+            if (verbose) {
+                std::cout << "Copied: " << sourcePath << " -> " << targetPath << "\n";
+            }
+        }
     }
 
+    /**
+     * @brief 创建空文件
+     *
+     * @param flags 命令标志位参数（本命令不使用，保留接口一致性）
+     * @param parameters 命令参数，包含路径信息。
+     */
     void touch(const std::vector<std::string>& flags, const std::vector<std::string>& parameters) {
-        if (flags[0] == "" || flags[0] == "-r") {
-            // 无参数(默认)或参数为"-r"(relative)时为相对模式,即在当前工作目录下创建文件
-
-            for (const auto& param : parameters) file.createFile(param);
-        } else if (flags[0] == "-a") {
-            // 参数为"-a"(absolute)时为绝对对模式
-
-            for (const auto& param : parameters) file.createFile(param);
+        // ———— 参数校验 ————
+        if (parameters.empty()) {
+            WARN(WarningLevel::ERROR, "参数错误：必须指定至少一个文件路径.");
+            return;
         }
 
-        file.printTree();
-    }*/
+        // ———— 遍历所有目标路径 ————
+        for (const auto& rawPath : parameters) {
+            // 1. 构造绝对路径，避免后续每次都重复解析
+            const std::string fullFilePath = buildFullPath(rawPath);
+
+            // 创建新空文件
+            file_.createFile(fullFilePath);
+        }
+    }
+
+    /**
+     * @brief 将指定文件的全部内容一次性输出到终端
+     *
+     * @param flags      命令标志列表，本命令不使用任何标志
+     * @param parameters 参数列表，唯一元素为要查看的文件路径或文件名称
+     */
+    void cat(const std::vector<std::string>& flags, const std::vector<std::string>& parameters) {
+        // ----- 1. 参数数量校验 -----
+        // 本命令仅接受一个参数：文件路径或文件名称
+        if (parameters.size() != 1) {
+            WARN(WarningLevel::ERROR,
+                 "[参数错误] 用法: cat <fileName|fullFilePath>");  // 提示正确用法
+            return;                                                // 参数错误，退出
+        }
+
+        // ----- 2. 构建完整文件路径 -----
+        // 将相对路径或文件名转换为绝对路径，确保定位正确
+        const std::string fullPath = buildFullPath(parameters[0]);
+
+        // ----- 3. 检查文件是否存在 -----
+        // 避免读取不存在的文件导致错误或异常
+        if (!file_.exists(fullPath)) {
+            WARN(WarningLevel::ERROR, "[文件不存在] 无法找到文件: ", fullPath);
+            return;  // 文件不存在，退出
+        }
+
+        // ----- 4. 读取文件内容 -----
+        // 一次性将整个文件读入内存
+        std::string content = file_.readFileAsString(fullPath);
+
+        // ----- 5. 输出到终端 -----
+        // 将读取到的内容直接写入标准输出，不做额外处理
+        Serial.print(content.c_str());
+    }
+
+    /**
+     * @brief 将一行文本写入指定文件
+     * @details
+     *   支持两种写入模式：
+     *     - "-w"：覆盖写入（write），即清空目标文件后写入
+     *     - "-a"：追加写入（append），即保留原内容后追加（默认模式）
+     *   文本内容由 parameters 列表中除最后一项外的所有元素拼接而成，
+     *   最后一项为目标文件路径，可为相对路径或绝对路径。
+     *
+     * @param flags      写入模式标志列表，若含 "-w" 则覆盖写入，否则追加写入
+     * @param parameters 文本片段和文件路径列表，最后一项为文件路径，其余项拼接为写入内容
+     */
+    void echo(const std::vector<std::string>& flags, const std::vector<std::string>& parameters) {
+        // 1. 校验标志和参数
+
+        // 标志校验
+        /// flags 至多只能传一个；传多个视为格式错误
+        if (flags.size() > 1) {
+            WARN(WarningLevel::ERROR, "[标志错误] 只能接受一个标志, 用法: echo [-w|-a] <string> <fileName|fullFilePath>");
+            return;
+        }
+
+        // 参数校验
+        /// parameters 至少应包含两个：一个或多个字符串 + 一个文件路径
+        if (parameters.size() < 2) {
+            WARN(WarningLevel::ERROR, "[参数错误] 参数数量不足, 用法: echo [-w|-a] <string> <fileName|fullFilePath>");
+            return;
+        }
+
+        // 2. 解析写入模式：默认追加 ("a")，如遇 "-w" 切换为覆盖 ("w")
+        const char* mode = "a";                              // 默认追加写入
+        if (!flags.empty() && flags[0] == "-w") mode = "w";  // 覆盖写入
+
+        // 3. 拼接写入内容：parameters[0..n-2] 拼接成完整字符串，末尾加换行
+        size_t textCount = parameters.size() - 1;                                          ///< 文本片段数量
+        size_t estimatedSize = 1;                                                          ///< 为末尾换行预留 1 字节
+        for (size_t i = 0; i < textCount; ++i) estimatedSize += parameters[i].size() + 1;  ///< 统计每段长度及空格
+
+        // 预估总长度：所有片段长度 + 空格数 + 换行符
+        std::string content;             ///< 最终写入内容
+        content.reserve(estimatedSize);  ///< 预分配，减少堆分配次数
+
+        for (size_t i = 0; i < textCount; ++i) {
+            if (i > 0) content.push_back(' ');  ///< 插入空格分隔每段文本
+            content.append(parameters[i]);      ///< 追加当前文本片段
+        }
+        content.push_back('\n');  ///< 写入末尾换行
+
+        // ----- 4. 构建完整文件路径 -----
+        const std::string fullPath = buildFullPath(parameters.back());  ///< 将最后一项路径转换为绝对路径
+
+        // ----- 5. 执行写入操作 -----
+        bool success = file_.writeFileAsString(fullPath, content, mode);
+
+        // ----- 6. 结果检查 -----
+        if (!success) {  ///< 写入失败时发出警告
+            WARN(WarningLevel::ERROR, "[写入失败] 无法写入文件: ", fullPath);
+        }
+    }
+
+    /**
+     * @brief 向文件写入格式化文本
+     * @details
+     *   支持两种写入模式：
+     *     - "-w"：覆盖写入（write），即清空目标文件后写入
+     *     - "-a"：追加写入（append），即保留原内容后追加（默认模式）
+     *   文本内容由 parameters 列表中除最后一项外的所有元素拼接而成，
+     *   最后一项为目标文件路径，可为相对路径或绝对路径。
+     *
+     * @param flags      写入模式标志列表，若含 "-w" 则覆盖写入，否则追加写入
+     * @param parameters 文本片段和文件路径列表，最后一项为文件路径，其余项拼接为写入内容
+     */
+    void printf(const std::vector<std::string>& flags, const std::vector<std::string>& parameters) {
+        // 1. 校验标志和参数
+
+        // 标志校验
+        /// flags 至多只能传一个；传多个视为格式错误
+        if (flags.size() > 1) {
+            WARN(WarningLevel::ERROR, "[标志错误] 只能接受一个标志, 用法: echo [-w|-a] <string> <fileName|fullFilePath>");
+            return;
+        }
+
+        // 参数校验
+        /// parameters 至少应包含两个：一个或多个字符串 + 一个文件路径
+        if (parameters.size() < 2) {
+            WARN(WarningLevel::ERROR, "[参数错误] 参数数量不足, 用法: echo [-w|-a] <string> <fileName|fullFilePath>");
+            return;
+        }
+
+        // 2. 解析写入模式：默认追加 ("a")，如遇 "-w" 切换为覆盖 ("w")
+        const char* mode = "a";                              // 默认追加写入
+        if (!flags.empty() && flags[0] == "-w") mode = "w";  // 覆盖写入
+
+        // 3. 拼接写入内容：parameters[0..n-2] 拼接成完整字符串，末尾加换行
+        size_t textCount = parameters.size() - 1;  ///< 文本片段数量
+        size_t estimatedSize = 0;
+        for (size_t i = 0; i < textCount; ++i) estimatedSize += parameters[i].size() + 1;  ///< 统计每段长度及空格
+
+        // 预估总长度：所有片段长度 + 空格数 + 换行符
+        std::string content;             ///< 最终写入内容
+        content.reserve(estimatedSize);  ///< 预分配，减少堆分配次数
+
+        for (size_t i = 0; i < textCount; ++i) {
+            if (i > 0) content.push_back(' ');  ///< 插入空格分隔每段文本
+            content.append(parameters[i]);      ///< 追加当前文本片段
+        }
+
+        Serial.println(content.c_str());
+
+        // ----- 4. 构建完整文件路径 -----
+        const std::string fullPath = buildFullPath(parameters.back());  ///< 将最后一项路径转换为绝对路径
+
+        // ----- 5. 执行写入操作 -----
+        bool success = file_.writeFileAsString(fullPath, content, mode);
+
+        // ----- 6. 结果检查 -----
+        if (!success) {  ///< 写入失败时发出警告
+            WARN(WarningLevel::ERROR, "[写入失败] 无法写入文件: ", fullPath);
+        }
+    }
+
+    /**
+     * @brief 在指定目录或当前工作目录下精确查找文件或目录
+     *
+     * @details
+     * - 支持两种调用形式：
+     *     1. `find <name>`：在当前工作目录查找名称完全匹配 `<name>` 的文件或目录
+     *     2. `find <fullDirPath> <name>`：在指定目录 `<fullDirPath>` 下查找名称完全匹配 `<name>` 的文件或目录
+     *
+     * @param flags      标志列表，本命令不使用任何标志，由框架层统一忽略
+     * @param parameters 参数列表：
+     *                   - 当 `parameters.size() == 1` 时，`parameters[0]` 为待查找名称
+     *                   - 当 `parameters.size() == 2` 时，`parameters[0]` 为目录路径，`parameters[1]` 为待查找名称
+     */
+    void find(const std::vector<std::string>& flags, const std::vector<std::string>& parameters) {
+        // ----- 1. 参数数量校验 -----
+        // 本命令仅允许 1 或 2 个参数，多于或少于时打印错误并返回
+        if (parameters.size() < 1 || parameters.size() > 2) {
+            WARN(WarningLevel::ERROR, "[参数错误] 用法: find [fullDirPath] <name>");
+            return;  // 参数数目不正确，退出
+        }
+
+        // ----- 2. 确定搜索目录和目标名称 -----
+        std::string parentPath;  // 待搜索的父目录绝对路径
+        std::string targetName;  // 待查找的文件或目录名称
+
+        if (parameters.size() == 1) {
+            // 仅提供名称时，使用当前工作目录搜索
+            targetName = parameters[0];  // 设置查找名称
+            parentPath = workingDir_;    // 使用成员变量记录的当前工作目录
+        } else {
+            // 提供目录路径和名称时，先将路径转为绝对路径，再设置名称
+            parentPath = buildFullPath(parameters[0]);  // 构建绝对路径
+            targetName = parameters[1];                 // 设置查找名称
+        }
+
+        // ----- 3. 执行查找 -----
+        // 调用 FileExplorer::findPath，返回所有匹配路径
+        std::vector<std::string> results = file_.findPath(targetName, parentPath);
+
+        // ----- 4. 输出查找结果 -----
+        if (results.empty()) {
+            // 若无任何匹配结果，则打印信息并返回
+            WARN(WarningLevel::INFO, "[无匹配结果] 未找到: ", targetName);
+            return;  // 无结果，退出
+        }
+
+        // 遍历所有匹配路径并输出
+        for (const auto& path : results) Serial.println(path.c_str());
+    }
+
+    /**
+     * @brief   在指定目录或当前工作目录下模糊搜索文件或目录
+     *
+     * @details
+     * - 支持两种调用形式：
+     *     1. `search <name>`：在当前工作目录下递归搜索名称与 `<name>` 相似度 ≥ 阈值的文件或目录
+     *     2. `search <fullDirPath> <name>`：在指定目录 `<fullDirPath>` 下递归搜索名称与 `<name>` 相似度 ≥ 阈值的文件或目录
+     * - 相似度计算由底层 FileExplorer::searchPath 实现，可基于编辑距离、前缀匹配等算法
+     *
+     * @param flags      标志列表，本命令不使用任何标志，由框架层统一忽略
+     * @param parameters 参数列表：
+     *                   - 当 `parameters.size() == 1` 时，`parameters[0]` 为待搜索名称
+     *                   - 当 `parameters.size() == 2` 时，`parameters[0]` 为搜索起始目录，`parameters[1]` 为待搜索名称
+     */
+    void search(const std::vector<std::string>& flags, const std::vector<std::string>& parameters) {
+        // ----- 1. 参数数量校验 -----
+        // 本命令仅允许 1 或 2 个参数，超出范围则报错并返回
+        if (parameters.size() < 1 || parameters.size() > 2) {
+            WARN(WarningLevel::ERROR, "[参数错误] 用法: search [fullDirPath] <name>");
+            return;  // 参数不合法，退出
+        }
+
+        // ----- 2. 确定搜索目录和目标名称 -----
+        std::string parentPath;  // 搜索起始目录的绝对路径
+        std::string targetName;  // 待搜索名称
+
+        if (parameters.size() == 1) {
+            // 仅提供名称时，使用当前工作目录
+            targetName = parameters[0];  // 赋值待搜索名称
+            parentPath = workingDir_;    // 使用成员变量记录的当前工作目录
+        } else {
+            // 同时提供路径和名称时，先构建绝对路径
+            parentPath = buildFullPath(parameters[0]);  // 构建并获取绝对路径
+            targetName = parameters[1];                 // 赋值待搜索名称
+        }
+
+        // ----- 3. 执行模糊搜索 -----
+        // 调用底层接口，threshold 默认为 0.0f，表示返回所有名称中含有 targetName 的项
+        constexpr float threshold = 0.0f;  // 相似度阈值，可在未来扩展为参数
+        std::vector<std::string> results = file_.searchPath(targetName, parentPath, threshold);
+
+        // ----- 4. 输出搜索结果 -----
+        if (results.empty()) {
+            // 若未找到任何匹配项，则打印信息并返回
+            WARN(WarningLevel::INFO, "[无匹配结果] 未找到: ", targetName);
+            return;  // 无结果，退出
+        }
+
+        // 遍历所有匹配路径并输出
+        for (const auto& path : results) Serial.println(path.c_str());
+    }
 
    private:
     /**
@@ -490,9 +799,11 @@ class FileExplorerShell {
      * - 判断输入的路径字符串是否是绝对路径, 如果不是则自动补全构造完整路径
      *
      * @param target 目标路径字符串（绝对或相对）
+     * @param basePath 基路径,基于基路径构建完整路径(默认为工作路径)
      * @return 返回完整的绝对路径
      */
-    std::string buildFullPath(const std::string& target) {
+    std::string buildFullPath(const std::string& target) { return buildFullPath(target, workingDir_); }
+    std::string buildFullPath(const std::string& target, const std::string& basePath) {
         std::string fullPath;
 
         // 判断目标路径是否为绝对路径（如以 '/' 开头）
@@ -503,12 +814,12 @@ class FileExplorerShell {
 
             // 情况一：当前目录为根目录 "/"
             // 特殊处理避免拼接出 "//xx"（根目录与目标之间无需额外加斜杠）
-            if (workingDir_ == "/") {
+            if (basePath == "/") {
                 fullPath = "/" + target;
             }
             // 情况二：普通路径，拼接斜杠和子目录名
             else {
-                fullPath = workingDir_ + "/" + target;
+                fullPath = basePath + "/" + target;
             }
         }
 
