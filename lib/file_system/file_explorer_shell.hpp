@@ -502,7 +502,7 @@ class FileExplorerShell {
             if (i > 0) content.push_back(' ');  ///< 插入空格分隔每段文本
             content.append(parameters[i]);      ///< 追加当前文本片段
         }
-        content.push_back('\n');  ///< 写入末尾换行
+        content.append("\r\n");  ///< 写入末尾换行
 
         // ----- 4. 构建完整文件路径 -----
         const std::string fullPath = buildFullPath(parameters.back());  ///< 将最后一项路径转换为绝对路径

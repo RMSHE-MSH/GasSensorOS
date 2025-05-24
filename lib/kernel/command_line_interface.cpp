@@ -29,9 +29,10 @@ Command_Line_Interface::Command_Line_Interface() {
 }
 
 void Command_Line_Interface::run() {
-    if (read_serial_message()) {                             // 检查是否有新消息
-        parse_command();                                     // 解析命令字符串
-        cmd_table.execute_cmd(cmd_name, flags, parameters);  // 执行命令
+    if (read_serial_message()) {                                    // 检查是否有新消息
+        Serial.println(("cmd > " + command_str + "\r\n").c_str());  // 回显命令
+        parse_command();                                            // 解析命令字符串
+        cmd_table.execute_cmd(cmd_name, flags, parameters);         // 执行命令
     }
 }
 

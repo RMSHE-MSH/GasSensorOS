@@ -48,7 +48,7 @@ class TreeTool {
         std::string result;  // 用于存储构建好的树结构字符串
 
         // 拼接当前节点的数据
-        result += prefix + (isLast ? "└─" : "├─") + node->node_data + "\n";
+        result += prefix + (isLast ? "└─" : "├─") + node->node_data + "\r\n";
 
         // 递归遍历子节点，拼接树结构字符串
         size_t numChildren = node->children.size();  // 获取子节点数量，避免在循环中重复计算

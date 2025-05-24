@@ -46,8 +46,8 @@ class CMD_FUNC {
     // 打印操作系统信息
     void osinfo(const std::vector<std::string>& flags, const std::vector<std::string>& parameters) {
         Serial.println(
-            "GasSensor OS\nVersion: Alpha.Mark3.2024.12.28\nUpdate: https://github.com/RMSHE-MSH/GasSensorOS\nPowered by "
-            "RMSHE\nE-mail: asdfghjkl851@outlook.com");
+            "GasSensor OS\r\nVersion: Alpha.Mark3.2024.12.28\r\nUpdate: https://github.com/RMSHE-MSH/GasSensorOS\r\nPowered by "
+            "RMSHE\r\nE-mail: asdfghjkl851@outlook.com");
     }
 
     void test(const std::vector<std::string>& flags, const std::vector<std::string>& parameters) {
@@ -163,6 +163,7 @@ class COMMAND_TABLE {
         for (auto flag : flags) {
             if (!verify_cmd(cmd_name, flag)) return;  // 如果有无效标志，停止执行
         }
+
         // 调用命令的处理函数并执行命令
         command_table[cmd_name].second(flags, parameters);
     }
