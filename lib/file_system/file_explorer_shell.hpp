@@ -33,6 +33,14 @@
 class FileExplorerShell {
    public:
     /**
+     * @brief 挂载文件系统
+     *
+     * @param flags 命令标志位（未使用）
+     * @param parameters 命令参数（未使用）
+     */
+    void mount(const std::vector<std::string>& flags, const std::vector<std::string>& parameters) { fs_.mount(); }
+
+    /**
      * @brief 切换当前工作目录
      *
      * 实现如下功能：

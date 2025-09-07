@@ -34,7 +34,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
-#include <wifi_connector.hpp>
+#include <wifi_shell.hpp>
 
 class CMD_FUNC {
    public:
@@ -69,12 +69,6 @@ class CMD_FUNC {
         for (const auto& param : parameters) output += " " + param;
 
         Serial.println(output.c_str());
-    }
-
-    // 连接WIFI: <wifi_connect> ["SSID"] ["PASSWORD"]
-    void wifi_connect(const std::vector<std::string>& flags, const std::vector<std::string>& parameters) {
-        WiFiConnector WIFI(parameters[0].c_str(), parameters[1].c_str(), true);
-        WIFI.connect();
     }
 };
 
@@ -179,7 +173,11 @@ class COMMAND_TABLE {
         add_cmd("help", {}, std::bind(&CMD_FUNC::help, &cmd_func, std::placeholders::_1, std::placeholders::_2));
         add_cmd("osinfo", {}, std::bind(&CMD_FUNC::osinfo, &cmd_func, std::placeholders::_1, std::placeholders::_2));
         add_cmd("test", {"-f", "-s"}, std::bind(&CMD_FUNC::test, &cmd_func, std::placeholders::_1, std::placeholders::_2));
-        add_cmd("wifi_connect", {}, std::bind(&CMD_FUNC::wifi_connect, &cmd_func, std::placeholders::_1, std::placeholders::_2));
+
+        add_cmd("wifi_connect", {}, std::bind(&WifiShell::wifi_connect, &wifi_shell, std::placeholders::_1, std::placeholders::_2));
+
+        // 挂载文件系统
+        add_cmd("mount", {}, std::bind(&FileExplorerShell::mount, &file_explorer_shell, std::placeholders::_1, std::placeholders::_2));
 
         // 切换当前工作目录
         add_cmd("cd", {}, std::bind(&FileExplorerShell::cd, &file_explorer_shell, std::placeholders::_1, std::placeholders::_2));
@@ -271,6 +269,7 @@ class COMMAND_TABLE {
    private:
     CMD_FUNC cmd_func;                      ///< 内建命令的处理函数对象，例如 help, osinfo 等
     FileExplorerShell file_explorer_shell;  ///< 文件资源管理器内建命令的处理函数对象
+    WifiShell wifi_shell;                   /// Wi-Fi 连接管理内建命令的处理函数对象
 
     // 命令表：以命令名称为键，值是一个包含命令标志和处理函数的对
     std::unordered_map<std::string,
