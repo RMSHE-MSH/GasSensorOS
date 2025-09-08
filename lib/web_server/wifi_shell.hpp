@@ -30,24 +30,55 @@
 class WifiShell {
    public:
     /**
-     * @brief 连接到指定WIFI
-     *
+     * @brief 连接到指定的 Wi-Fi 网络。
      * @param flags 命令标志位（未使用）
      * @param parameters 命令参数: SSID, PASSWORD, timeout
-     * @note wifi_connect <SSID> <PASSWORD> [timeout]
+     * @note wifi_connect [SSID] [PASSWORD] [timeout]
      */
     void wifi_connect(const std::vector<std::string>& flags, const std::vector<std::string>& parameters) {
+        // 自动连接到可用的Wi-Fi网络
+        if (parameters.empty()) {
+            // 如果没有提供参数，则将自动尝试连接所有已保存的Wi-Fi凭据。
+            if (!WIFI.autoConnect()) {
+                WARN(WarningLevel::ERROR, "Auto-connect to Wi-Fi failed.");
+            }
+            return;
+        }
+
+        // 如果提供了SSID和PASSWORD，则按指定参数连接
         uint32_t timeout = 10000;  // 默认超时时间10秒
 
         // 若提供第三个参数，则解析为超时时间
         if (parameters.size() == 3) {
             timeout = static_cast<uint32_t>(std::stoul(parameters[2]));
+            WIFI.setTimeout(timeout);
         }
 
-        // 创建 WiFiConnector 对象并连接
-        WiFiConnector WIFI(parameters[0].c_str(), parameters[1].c_str(), timeout);
+        // 设置 Wi-Fi 凭据并连接
+        WIFI.setWifiCredentials(parameters[0], parameters[1]);
         WIFI.connect();
     }
 
+    /**
+     * @brief 测试网络的连接性
+     * @param flags 命令标志位（未使用）
+     * @param parameters 命令参数: target(URL or IP)
+     * @note ping [target]
+     *       - target: 一个 URL (例如, http://www.baidu.com) 或一个主机/IP (例如, 8.8.8.8)。
+     */
+    void ping(const std::vector<std::string>& flags, const std::vector<std::string>& parameters) {
+        std::string target = "8.8.8.8";  // 检测的目标。默认为 "8.8.8.8"。
+
+        // 若用户提供 target 参数, 则使用用户提供值
+        if (!parameters.empty()) target = parameters[0];
+
+        if (WIFI.checkNetwork(target)) {
+            std::cerr << "Ping successful: " << target << "\n";
+        } else {
+            WARN(WarningLevel::ERROR, "Ping failed: %s", target.c_str());
+        }
+    }
+
    private:
+    WiFiConnector WIFI;  // 创建 WiFiConnector 对象
 };

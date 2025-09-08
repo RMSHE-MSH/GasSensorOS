@@ -174,7 +174,11 @@ class COMMAND_TABLE {
         add_cmd("osinfo", {}, std::bind(&CMD_FUNC::osinfo, &cmd_func, std::placeholders::_1, std::placeholders::_2));
         add_cmd("test", {"-f", "-s"}, std::bind(&CMD_FUNC::test, &cmd_func, std::placeholders::_1, std::placeholders::_2));
 
+        // 连接到指定 WIFI
         add_cmd("wifi_connect", {}, std::bind(&WifiShell::wifi_connect, &wifi_shell, std::placeholders::_1, std::placeholders::_2));
+
+        // 测试网路的连接性
+        add_cmd("ping", {}, std::bind(&WifiShell::ping, &wifi_shell, std::placeholders::_1, std::placeholders::_2));
 
         // 挂载文件系统
         add_cmd("mount", {}, std::bind(&FileExplorerShell::mount, &file_explorer_shell, std::placeholders::_1, std::placeholders::_2));
