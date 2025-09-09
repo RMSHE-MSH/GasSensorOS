@@ -15,8 +15,8 @@
 
 | 更新日期   | 版本号                   | 主要更新内容                                                 |
 | :--------- | :----------------------- | :----------------------------------------------------------- |
-| 2025.09.09 | Alpha.Mark3.2025.09.07   | 1. 新增`ping [target]`命令, 用于测试与目标域名、主机或IP地址的网络连通性。 |
-| 2025.09.07 | Alpha.Mark3.2025.09.07   | 1. 新增`mount`命令, 使用该命令可手动挂载文件系统。<br/>2. 新增`wifi_connect <SSID> <PASSWORD> [timeout]`命令，用于连接指定 Wi‑Fi 网络。<br/>3. 每次 Wi‑Fi 连接成功后，连接凭据(SSID and PASSWORD)将自动保存至 `/.os/wifi_list.csv`<br/>**更新说明**: 本次更新对 `wifi_connector.hpp` 进行了大修。为以 API 的方式将大模型接入 GSOS，需完善网络基础能力，故优先重构 Wi‑Fi 连接模块。该模块目前尚未完全完善，后续将持续更新其功能。 |
+| 2025.09.09 | Alpha.Mark3.2025.09.07   | 1. 新增`ping [target]`命令, 用于测试与目标域名、主机或IP地址的网络连通性。<br/>2. 优化 WIFI 凭据保存机制。<br/>3. 新增自动连接到可用 Wi-Fi 网络的功能。 |
+| 2025.09.07 | Alpha.Mark3.2025.09.07   | 1. 新增`mount`命令, 使用该命令可手动挂载文件系统。<br/>2. 新增`wifi_connect [SSID] [PASSWORD] [timeout]`命令，用于连接指定 Wi‑Fi 网络。<br/>3. 每次 Wi‑Fi 连接成功后，连接凭据(SSID and PASSWORD)将自动保存至 `/.os/wifi_list.csv`<br/>**更新说明**: 本次更新对 `wifi_connector.hpp` 进行了大修。为以 API 的方式将大模型接入 GSOS，需完善网络基础能力，故优先重构 Wi‑Fi 连接模块。该模块目前尚未完全完善，后续将持续更新其功能。 |
 | 2025.05.21 | Alpha.Mark3.2025.05.21   | 1. 新增`RingBuffer<T, Capacity>`通用环形缓冲区模板类容器。<br/>2. 完成`File Explorer Shell`的开发, 现在可以通过`命令行接口（CLI)`使用`文件资源管理器`来管理文件系统。目前共 14 个命令可用, 具体支持的命令为:`cd` `pwd` `ls` `tree` `mkdir` `rm` `mv` `cp` `touch` `cat` `echo` `printf` `find` `search`, 未来还会继续完善。 |
 | 2025.05.12 | Alpha.Mark3.2025.05.12   | 完成了`FileExplorer`的开发, 现在文件资源管理体系已可用。     |
 | 2025.01.21 | Alpha.Mark3.2025.01.21   | 1. 针对通用树数据结构容器 `tree.hpp` 的功能更新，`findDescendant` 和 `findNode` 函数在更新后，原先只返回第一个匹配的节点指针，现在返回一个包含所有匹配节点指针的 `std::vector` 容器，适用于树中存在多个相同名称节点的情况。<br/>2. `DataTable`类新增了`saveTable`函数，支持以覆写或追加模式保存表格数据到CSV文件，同时`loadTable`函数可以从CSV文件加载数据并更新当前表格内容。`getTableString` 用于获取表格的字符串表示。修复若干Bug。 |

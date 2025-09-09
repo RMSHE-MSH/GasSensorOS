@@ -131,48 +131,63 @@ class WiFiConnector {
      *      - 若有相同 SSID 且密码相同 -> 不作任何操作
      */
     void saveWifi() {
-        // 如果Wi-Fi列表文件不存在，则创建一个新的文件
-        if (!file_.exists(wifi_list_path_)) {
-            DataTable wifi_list(1, 2);                    // 初始化一个数据表。
-            wifi_list.replaceRow({ssid_, password_}, 0);  // 添加Wi-Fi信息
-            wifi_list.saveTable(wifi_list_path_, "w");    // 写入WIFI信息
+        // 快速返回：SSID 为空不执行任何持久化，避免产生无效记录
+        if (ssid_.empty()) {
+            WARN(WarningLevel::INFO, "Skip saving Wi-Fi because SSID is empty.");
             return;
         }
 
-        // 如果Wi-Fi列表文件存在，则读取文件并检查是否已存在相同的Wi-Fi信息
-        DataTable wifi_list(1, 2);             // 初始化一个数据表 用于加载Wi-Fi信息
-        wifi_list.loadTable(wifi_list_path_);  // 从文件中加载Wi-Fi信息
+        // 统一的 WifiList 保存步骤（写临时文件 -> 校验 -> 原子替换）
+        // 使用 lambda 局部封装，避免重复代码，同时便于将来扩展（例如增加校验、备份等）
+        auto writeWifiList = [this](DataTable& table) -> bool {
+            // 写入临时文件
+            table.saveTable(wifi_list_temp_path_, "w");
+            if (!file_.exists(wifi_list_temp_path_)) {
+                WARN(WarningLevel::ERROR, "Failed to write WifiList file, path: %s", wifi_list_temp_path_.c_str());
+                return false;
+            }
 
-        // 查询是否存在相同的Wi-Fi名称
+            // 删除旧文件（存在则删）
+            if (file_.exists(wifi_list_path_)) file_.deletePath(wifi_list_path_);
+
+            // 原子替换：重命名临时文件为正式文件
+            file_.renamePath(wifi_list_temp_path_, "wifi_list.csv");
+            return true;
+        };
+
+        // 加载或初始化凭据表
+        DataTable wifi_list(1, 2);
+        if (!file_.exists(wifi_list_path_)) {
+            // 凭据文件不存在：创建并写入首条记录
+            wifi_list.replaceRow({ssid_, password_}, 0);
+            writeWifiList(wifi_list);
+            return;
+        }
+
+        // 文件存在：加载并处理
+        wifi_list.loadTable(wifi_list_path_);
+
+        // 查询是否已有相同 SSID
         std::vector<std::pair<size_t, size_t>> locations = wifi_list.query(ssid_);
 
-        // 查询是否存在相同的Wi-Fi名称
         if (locations.empty()) {
-            // 如果不存在相同的Wi-Fi名称，则追加新的Wi-Fi信息
-            DataTable new_wifi(1, 2);  // 创建一个只包含新条目的临时表
-            new_wifi.replaceRow({ssid_, password_}, 0);
-            new_wifi.saveTable(wifi_list_path_, "a");  // 追加WIFI信息
+            // 无相同 SSID：在第一行插入新条目
+            wifi_list.insertRow({ssid_, password_}, 0);
+            writeWifiList(wifi_list);
             return;
         }
 
-        // 如果存在相同的Wi-Fi名称，则检查密码是否需要更新。
+        // 已存在相同 SSID，定位相同 SSID 的所在行
         size_t rowIndex = locations[0].first;
-        // 查询密码是否发生更改。如果密码未更改，则不进行任何操作。
-        if (wifi_list.getCell(rowIndex, 1) == password_) return;
 
-        // 更新密码并保存文件(先写入临时文件，成功后再重命名，防止凭据丢失)
-        wifi_list.replaceRow({ssid_, password_}, rowIndex);
-        wifi_list.saveTable(wifi_list_temp_path_, "w");  // 保存更新后的Wi-Fi信息(临时文件)
+        // 如已在第一行则避免不必要的闪存写入；否则仅上移以提升优先级
+        if (rowIndex == 0) return;
 
-        // 如果临时文件写入失败，报错后直接返回
-        if (!file_.exists(wifi_list_temp_path_)) {
-            WARN(WarningLevel::ERROR, "Failed to write WifiList file, path: ", wifi_list_temp_path_.c_str());
-            return;
-        }
+        // 将凭据上移到第一行（保持“最近成功连接优先”）
+        wifi_list.deleteRow(rowIndex);
+        wifi_list.insertRow({ssid_, password_}, 0);
 
-        // 替换文件：删除旧文件并重命名临时文件
-        file_.deletePath(wifi_list_path_);                        // 删除旧文件
-        file_.renamePath(wifi_list_temp_path_, wifi_list_path_);  // 重命名临时文件
+        writeWifiList(wifi_list);
     }
 
     /**
@@ -302,7 +317,7 @@ inline std::string WiFiConnector::getIPAddress() const { return std::string(WiFi
 inline bool WiFiConnector::checkNetwork(const std::string& target) {
     // 1. 前置条件检查：确认基础网络连接（Wi-Fi）已就绪。
     if (WiFi.status() != WL_CONNECTED) {
-        WARN(WarningLevel::WARNING, "Wi-Fi is not connected. Current status: ", WiFi.status());
+        WARN(WarningLevel::WARNING, "Wi-Fi is not connected. Current status: %d", WiFi.status());
         return false;
     }
 
