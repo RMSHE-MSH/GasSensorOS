@@ -77,20 +77,66 @@ class WiFiConnector {
      */
     bool connect();
 
-    // 断开当前Wi-Fi连接
+    // 断开当前Wi-Fi的连接
     void disconnect();
 
+    // 获取当前连接的 Wi-Fi 网络名称
+    std::string getSSID() const;
+
     /**
-     * @brief 获取当前 Wi-Fi 状态
-     * @return int
+     * @brief 获取指定索引的 Wi-Fi 网络的 SSID。
+     * @param network_index 要获取 SSID 的网络索引。
+     * @return std::string 指定索引的 Wi-Fi 网络的 SSID。
      */
-    int getStatus() const;
+    std::string getSSID(uint8_t network_index) const;
+    /**
+     * @brief 获取当前 Wi-Fi 的连接状态并返回对应的状态标识字符串
+     * @return std::string 返回表示 Wi-Fi 状态的字符串，取值及含义：
+     *   - "WL_CONNECTED"：已成功连接到 Wi-Fi 网络，并分配到本地 IP。
+     *   - "WL_NO_SHIELD"：未检测到 Wi-Fi 硬件/模块（无网卡/模块）。
+     *   - "WL_IDLE_STATUS"：临时空闲状态（在调用 WiFi.begin() 后等待连接期间）。如果尝试次数用尽会变为 "WL_CONNECT_FAILED"，连接成功会变为
+     * "WL_CONNECTED"。
+     *   - "WL_NO_SSID_AVAIL"：未发现可用的 SSID（没有可连接的无线网络）。
+     *   - "WL_SCAN_COMPLETED"：完成了网络扫描（scan 操作结束的通知性状态）。
+     *   - "WL_CONNECT_FAILED"：连接尝试全部失败（所有重试均未能建立连接）。
+     *   - "WL_CONNECTION_LOST"：此前已连接但连接丢失（非主动断开，可能为中途断线）。
+     *   - "WL_DISCONNECTED"：当前未连接到任何网络（处于断开状态）。
+     *   - "UNKNOWN_WIFI_STATUS"：未知或未被识别的状态码。
+     * @note 本函数返回的是可读的状态标识字符串，适用于日志记录和调试；若需基于数值判断，请使用 WiFi.status() 的返回值进行处理。
+     */
+    std::string getStatus() const;
 
     /**
      * @brief 获取设备当前在 Wi-Fi 网络中的 IP 地址。
      * @return std::string 以字符串形式返回本地 IP 地址。
      */
     std::string getIPAddress() const;
+
+    /**
+     * @brief 获取网关的 IP 地址。
+     * @return std::string
+     */
+    std::string getGatewayIP() const;
+
+    /**
+     * @brief 获取网关的子网掩码
+     * @return std::string
+     */
+    std::string getSubnetMask() const;
+
+    /**
+     * @brief 获取当前网络的加密类型
+     * @return std::string 以字符串形式返回 WIFI 加密类型。
+     */
+    std::string getEncryptionType(const std::string& ssid = "") const;
+
+    /**
+     * @brief 获取与路由器的连接的信号强度
+     * @return long 返回路由器的连接的信号强度
+     */
+    long getRSSI() const;
+
+    DataTable scanNetworks();
 
     /**
      * @brief 检测网络是否可用。
@@ -310,9 +356,117 @@ inline bool WiFiConnector::connect() {
 
 inline void WiFiConnector::disconnect() { WiFi.disconnect(); }
 
-inline int WiFiConnector::getStatus() const { return WiFi.status(); }
+// 获取当前连接的 Wi-Fi 网络名称
+inline std::string WiFiConnector::getSSID() const { return std::string(WiFi.SSID().c_str()); }
+
+// 获取指定索引的 Wi-Fi 网络的 SSID
+inline std::string WiFiConnector::getSSID(uint8_t network_index) const { return std::string(WiFi.SSID(network_index).c_str()); }
+
+inline std::string WiFiConnector::getStatus() const {
+    int status = WiFi.status();
+    switch (status) {
+        case WL_CONNECTED:
+            return "WL_CONNECTED";
+        case WL_NO_SHIELD:
+            return "WL_NO_SHIELD";
+        case WL_IDLE_STATUS:
+            return "WL_IDLE_STATUS";
+        case WL_NO_SSID_AVAIL:
+            return "WL_NO_SSID_AVAIL";
+        case WL_SCAN_COMPLETED:
+            return "WL_SCAN_COMPLETED";
+        case WL_CONNECT_FAILED:
+            return "WL_CONNECT_FAILED";
+        case WL_CONNECTION_LOST:
+            return "WL_CONNECTION_LOST";
+        case WL_DISCONNECTED:
+            return "WL_DISCONNECTED";
+        default:
+            return "UNKNOWN_WIFI_STATUS";
+    }
+}
 
 inline std::string WiFiConnector::getIPAddress() const { return std::string(WiFi.localIP().toString().c_str()); }
+
+inline std::string WiFiConnector::getGatewayIP() const { return std::string(WiFi.gatewayIP().toString().c_str()); }
+
+inline std::string WiFiConnector::getSubnetMask() const { return std::string(WiFi.subnetMask().toString().c_str()); }
+
+/*
+
+inline std::string WiFiConnector::getEncryptionType(const std::string& ssid) const {
+    String targetSsid;
+    if (ssid.empty()) {
+        // 如果未传入 SSID，则获取当前连接的 Wi-Fi SSID
+        targetSsid = WiFi.SSID();
+        if (targetSsid.length() == 0) {
+            WARN(WarningLevel::WARNING, "No SSID provided and not currently connected to Wi-Fi.");
+            return std::string("UNKNOWN_ENC_TYPE");
+        }
+    } else {
+        targetSsid = String(ssid.c_str());
+    }
+
+    // 扫描网络以查找目标 SSID 的加密类型
+    int n = WiFi.scanNetworks();
+    if (n == 0) {
+        WARN(WarningLevel::WARNING, "No Wi-Fi networks found during scan.");
+        return std::string("UNKNOWN_ENC_TYPE");
+    }
+
+    for (int i = 0; i < n; ++i) {
+        if (WiFi.SSID(i) == targetSsid) {
+            int type = WiFi.encryptionType(i);
+            switch (type) {
+                case WIFI_AUTH_OPEN:
+                    return "NONE";
+                case WIFI_AUTH_WEP:
+                    return "WEP";
+                case WIFI_AUTH_WPA_PSK:
+                    return "WPA_PSK";
+                case WIFI_AUTH_WPA2_PSK:
+                    return "WPA2_PSK";
+                case WIFI_AUTH_WPA_WPA2_PSK:
+                    return "WPA_WPA2_PSK";
+                case WIFI_AUTH_WPA2_ENTERPRISE:
+                    return "WPA2_ENTERPRISE";
+                case WIFI_AUTH_WPA3_PSK:
+                    return "WPA3_PSK";
+                case WIFI_AUTH_WPA2_WPA3_PSK:
+                    return "WPA2_WPA3_PSK";
+                default:
+                    return "UNKNOWN_ENC_TYPE";
+            }
+        }
+    }
+
+    WARN(WarningLevel::WARNING, "Target SSID '%s' not found in scan results.", targetSsid.c_str());
+    return "UNKNOWN_ENC_TYPE";
+}
+*/
+
+inline long WiFiConnector::getRSSI() const { return WiFi.RSSI(); }
+
+/*
+inline DataTable WiFiConnector::scanNetworks() {
+    // 1. 前置条件检查
+    int networkCount = WiFi.scanNetworks();  // 扫描网络
+
+    if (networkCount == 0) {
+        WARN(WarningLevel::WARNING, "No Wi-Fi networks found during scan.");
+        return DataTable();  // 返回空的DataTable
+    }
+
+    // 2. 构建返回数据
+    DataTable net_works_list(networkCount, 3);
+
+    for (int i = 0; i < networkCount; ++i) {
+        net_works_list.replaceRow({getSSID(i), WiFi.encryptionType(i), WiFi.RSSI(i)}, i);
+    }
+
+    return net_works_list;
+}
+*/
 
 inline bool WiFiConnector::checkNetwork(const std::string& target) {
     // 1. 前置条件检查：确认基础网络连接（Wi-Fi）已就绪。

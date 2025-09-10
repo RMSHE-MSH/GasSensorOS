@@ -29,6 +29,8 @@
 
 class WifiShell {
    public:
+    void wifi(const std::vector<std::string>& flags, const std::vector<std::string>& parameters) {}
+
     /**
      * @brief 连接到指定的 Wi-Fi 网络。
      * @param flags 命令标志位（未使用）

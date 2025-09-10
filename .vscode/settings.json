@@ -65,7 +65,8 @@
         "stack": "cpp",
         "dense": "cpp",
         "main_3": "cpp",
-        "core": "cpp"
+        "core": "cpp",
+        "queue": "cpp"
     },
     "C_Cpp.default.cppStandard": ""
 }

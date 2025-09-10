@@ -9,10 +9,11 @@ WiFiConnector WIFI;
 void setup() {
     Serial.begin(115200);
     system_boot();
-    // delay(4000);
+    delay(4000);
     // WIFI.setWifiCredentials("323", "88888888");
     // WIFI.connect();
-    // WIFI.autoConnect();
+    WIFI.autoConnect();
+    std::cerr << WIFI.getSSID() << "\n";
 }
 
 void loop() { CLI.run(); }
